@@ -36,13 +36,53 @@ class LTAR_DB {
 			$params[] = $export_city;
 		}
 
+		$export_country = isset( $args['export_country'] ) ? trim( (string) $args['export_country'] ) : '';
+		if ( '' !== $export_country ) {
+			$where[]  = 'export_country = %s';
+			$params[] = $export_country;
+		}
+
 		$import_city = isset( $args['import_city'] ) ? trim( (string) $args['import_city'] ) : '';
 		if ( '' !== $import_city ) {
 			$where[]  = 'import_city = %s';
 			$params[] = $import_city;
 		}
 
+		$import_country = isset( $args['import_country'] ) ? trim( (string) $args['import_country'] ) : '';
+		if ( '' !== $import_country ) {
+			$where[]  = 'import_country = %s';
+			$params[] = $import_country;
+		}
+
 		return $where;
+	}
+
+	/**
+	 * Build ORDER BY clause for catalog queries.
+	 *
+	 * @param array $args Query arguments.
+	 * @return string
+	 */
+	protected static function build_order_by_clause( $args ) {
+		$args      = is_array( $args ) ? $args : array();
+		$order_by  = sanitize_key( (string) ( $args['order_by'] ?? '' ) );
+		$direction = strtolower( trim( (string) ( $args['order'] ?? '' ) ) );
+		$direction = 'desc' === $direction ? 'DESC' : 'ASC';
+
+		$numeric_columns = array(
+			'price_min',
+			'price_max',
+			'price_avg',
+			'transit_min_days',
+			'transit_max_days',
+			'transit_avg_days',
+		);
+
+		if ( in_array( $order_by, $numeric_columns, true ) ) {
+			return " ORDER BY CASE WHEN {$order_by} IS NULL THEN 1 ELSE 0 END ASC, {$order_by} {$direction}, import_country ASC, import_city ASC, export_country ASC, export_city ASC, service ASC, id DESC";
+		}
+
+		return ' ORDER BY import_country ASC, import_city ASC, export_country ASC, export_city ASC, service ASC, id DESC';
 	}
 
 	/**
@@ -172,7 +212,7 @@ class LTAR_DB {
 			$sql .= ' WHERE ' . implode( ' AND ', $where );
 		}
 
-		$sql .= ' ORDER BY import_country ASC, import_city ASC, export_country ASC, export_city ASC, service ASC, id DESC';
+		$sql .= self::build_order_by_clause( $args );
 
 		if ( ! empty( $args['limit'] ) ) {
 			$sql .= ' LIMIT ' . max( 1, (int) $args['limit'] );
@@ -225,7 +265,9 @@ class LTAR_DB {
 		global $wpdb;
 
 		$allowed = array(
+			'export_country',
 			'export_city',
+			'import_country',
 			'import_city',
 		);
 		$column  = sanitize_key( (string) $column );

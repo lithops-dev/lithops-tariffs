@@ -266,8 +266,12 @@ class LTAR_Admin {
 
 		$allowed_keys = array(
 			'ltar_search',
+			'ltar_export_country',
 			'ltar_export_city',
+			'ltar_import_country',
 			'ltar_import_city',
+			'ltar_order_by',
+			'ltar_order',
 			'per_page',
 			'paged',
 			'ltar_notice',
@@ -400,6 +404,114 @@ class LTAR_Admin {
 	}
 
 	/**
+	 * Whitelist sortable numeric fields.
+	 *
+	 * @param string $field Raw field.
+	 * @return string
+	 */
+	protected static function sanitize_sort_field( $field ) {
+		$field   = sanitize_key( (string) $field );
+		$allowed = array(
+			'price_min',
+			'price_max',
+			'price_avg',
+			'transit_min_days',
+			'transit_max_days',
+			'transit_avg_days',
+		);
+
+		return in_array( $field, $allowed, true ) ? $field : '';
+	}
+
+	/**
+	 * Normalize sort direction.
+	 *
+	 * @param string $direction Raw direction.
+	 * @return string
+	 */
+	protected static function sanitize_sort_direction( $direction ) {
+		return 'desc' === strtolower( trim( (string) $direction ) ) ? 'desc' : 'asc';
+	}
+
+	/**
+	 * Format money value for the table.
+	 *
+	 * @param mixed  $value    Value.
+	 * @param string $currency Currency.
+	 * @return string
+	 */
+	protected static function format_money_value( $value, $currency ) {
+		if ( '' === trim( (string) $value ) ) {
+			return '—';
+		}
+
+		$prefix = '' !== trim( (string) $currency ) ? trim( (string) $currency ) . ' ' : '';
+
+		return $prefix . trim( (string) $value );
+	}
+
+	/**
+	 * Format transit value for the table.
+	 *
+	 * @param mixed $value Value.
+	 * @return string
+	 */
+	protected static function format_days_value( $value ) {
+		if ( '' === trim( (string) $value ) ) {
+			return '—';
+		}
+
+		return trim( (string) $value );
+	}
+
+	/**
+	 * Render sort controls for one table column.
+	 *
+	 * @param string $label            Header label.
+	 * @param string $field            Sort field.
+	 * @param string $active_order_by  Active sort field.
+	 * @param string $active_order     Active sort direction.
+	 * @return void
+	 */
+	protected static function render_sort_header( $label, $field, $active_order_by, $active_order ) {
+		$label           = (string) $label;
+		$field           = self::sanitize_sort_field( $field );
+		$active_order_by = self::sanitize_sort_field( $active_order_by );
+		$active_order    = self::sanitize_sort_direction( $active_order );
+
+		if ( '' === $field ) {
+			echo esc_html( $label );
+			return;
+		}
+
+		$asc_url  = self::current_page_url(
+			array(
+				'ltar_order_by' => $field,
+				'ltar_order'    => 'asc',
+				'paged'         => 1,
+			),
+			array( 'ltar_notice', 'ltar_edit' )
+		);
+		$desc_url = self::current_page_url(
+			array(
+				'ltar_order_by' => $field,
+				'ltar_order'    => 'desc',
+				'paged'         => 1,
+			),
+			array( 'ltar_notice', 'ltar_edit' )
+		);
+		?>
+		<div class="ltar-sortable-head">
+			<span><?php echo esc_html( $label ); ?></span>
+			<span class="ltar-sort-links">
+				<a class="ltar-sort-link<?php echo $active_order_by === $field && 'asc' === $active_order ? ' is-active' : ''; ?>" href="<?php echo esc_url( $asc_url ); ?>" aria-label="<?php echo esc_attr( $label . ' ↑' ); ?>">↑</a>
+				<a class="ltar-sort-link<?php echo $active_order_by === $field && 'desc' === $active_order ? ' is-active' : ''; ?>" href="<?php echo esc_url( $desc_url ); ?>" aria-label="<?php echo esc_attr( $label . ' ↓' ); ?>">↓</a>
+			</span>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render admin page.
 	 *
 	 * @return void
@@ -412,8 +524,12 @@ class LTAR_Admin {
 		$settings      = ltar_get_settings();
 		$stats         = LTAR_DB::get_stats();
 		$search        = isset( $_GET['ltar_search'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$export_country = isset( $_GET['ltar_export_country'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_export_country'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$export_city   = isset( $_GET['ltar_export_city'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_export_city'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$import_country = isset( $_GET['ltar_import_country'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_import_country'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$import_city   = isset( $_GET['ltar_import_city'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_import_city'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_by      = self::sanitize_sort_field( isset( $_GET['ltar_order_by'] ) ? wp_unslash( $_GET['ltar_order_by'] ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order         = self::sanitize_sort_direction( isset( $_GET['ltar_order'] ) ? wp_unslash( $_GET['ltar_order'] ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$per_page      = isset( $_GET['per_page'] ) ? absint( wp_unslash( $_GET['per_page'] ) ) : 50; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$per_page      = in_array( $per_page, array( 25, 50, 100, 200 ), true ) ? $per_page : 50;
 		$paged         = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -425,9 +541,13 @@ class LTAR_Admin {
 		$token         = ltar_get_auth_token();
 		$shared_token  = function_exists( 'lesh_ensure_enrollment_token' ) && function_exists( 'lesh_decrypt' );
 		$filters       = array(
-			'search'      => $search,
-			'export_city' => $export_city,
-			'import_city' => $import_city,
+			'search'         => $search,
+			'export_country' => $export_country,
+			'export_city'    => $export_city,
+			'import_country' => $import_country,
+			'import_city'    => $import_city,
+			'order_by'       => $order_by,
+			'order'          => $order,
 		);
 		$total_rows    = LTAR_DB::count_rows( $filters );
 		$total_pages   = max( 1, (int) ceil( max( 1, $total_rows ) / $per_page ) );
@@ -459,7 +579,7 @@ class LTAR_Admin {
 			'initialEditId'  => $edit_id,
 		);
 		$return_to = self::current_page_url( array(), array( 'ltar_notice', 'ltar_edit' ) );
-		$reset_url = self::current_page_url( array(), array( 'ltar_search', 'ltar_export_city', 'ltar_import_city', 'paged', 'ltar_notice', 'ltar_edit' ) );
+		$reset_url = self::current_page_url( array(), array( 'ltar_search', 'ltar_export_country', 'ltar_export_city', 'ltar_import_country', 'ltar_import_city', 'ltar_order_by', 'ltar_order', 'paged', 'ltar_notice', 'ltar_edit' ) );
 
 		self::render_page_script( $alpine_config );
 		?>
@@ -798,8 +918,12 @@ class LTAR_Admin {
 		$total_rows       = (int) $total_rows;
 		$shown_from       = empty( $rows ) ? 0 : ( ( $paged - 1 ) * $per_page ) + 1;
 		$shown_to         = ( ( $paged - 1 ) * $per_page ) + count( $rows );
+		$export_countries = LTAR_DB::get_distinct_values( 'export_country' );
 		$export_cities    = LTAR_DB::get_distinct_values( 'export_city' );
+		$import_countries = LTAR_DB::get_distinct_values( 'import_country' );
 		$import_cities    = LTAR_DB::get_distinct_values( 'import_city' );
+		$active_order_by  = self::sanitize_sort_field( $filters['order_by'] ?? '' );
+		$active_order     = self::sanitize_sort_direction( $filters['order'] ?? '' );
 		$total_pages      = max( 1, (int) ceil( max( 1, $total_rows ) / max( 1, $per_page ) ) );
 		$pagination_links = self::pagination_links( $paged, $total_pages );
 		?>
@@ -848,14 +972,28 @@ class LTAR_Admin {
 
 			<form method="get" class="ltar-filter-form mb-4">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
+				<?php if ( '' !== $active_order_by ) : ?>
+					<input type="hidden" name="ltar_order_by" value="<?php echo esc_attr( $active_order_by ); ?>">
+				<?php endif; ?>
+				<?php if ( '' !== $active_order ) : ?>
+					<input type="hidden" name="ltar_order" value="<?php echo esc_attr( $active_order ); ?>">
+				<?php endif; ?>
 				<div class="ltar-filter-grid">
 					<div>
 						<label class="form-label" for="ltar-search"><?php esc_html_e( 'Поиск', 'lithops-tariffs' ); ?></label>
 						<input class="form-control" id="ltar-search" type="search" name="ltar_search" placeholder="<?php esc_attr_e( 'Ключ маршрута, страна, город, сервис', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['search'] ?? '' ); ?>">
 					</div>
 					<div>
+						<label class="form-label" for="ltar-export-country-filter"><?php esc_html_e( 'Страна откуда', 'lithops-tariffs' ); ?></label>
+						<input class="form-control" id="ltar-export-country-filter" type="text" name="ltar_export_country" list="ltar-export-country-options" placeholder="<?php esc_attr_e( 'Существующая страна экспорта', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['export_country'] ?? '' ); ?>">
+					</div>
+					<div>
 						<label class="form-label" for="ltar-export-city-filter"><?php esc_html_e( 'Город отправления', 'lithops-tariffs' ); ?></label>
 						<input class="form-control" id="ltar-export-city-filter" type="text" name="ltar_export_city" list="ltar-export-city-options" placeholder="<?php esc_attr_e( 'Существующий город экспорта', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['export_city'] ?? '' ); ?>">
+					</div>
+					<div>
+						<label class="form-label" for="ltar-import-country-filter"><?php esc_html_e( 'Страна куда', 'lithops-tariffs' ); ?></label>
+						<input class="form-control" id="ltar-import-country-filter" type="text" name="ltar_import_country" list="ltar-import-country-options" placeholder="<?php esc_attr_e( 'Существующая страна импорта', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['import_country'] ?? '' ); ?>">
 					</div>
 					<div>
 						<label class="form-label" for="ltar-import-city-filter"><?php esc_html_e( 'Город назначения', 'lithops-tariffs' ); ?></label>
@@ -874,9 +1012,19 @@ class LTAR_Admin {
 					<button type="submit" class="btn btn-outline-primary"><?php esc_html_e( 'Применить фильтры', 'lithops-tariffs' ); ?></button>
 					<a class="btn btn-outline-secondary" href="<?php echo esc_url( $reset_url ); ?>"><?php esc_html_e( 'Сбросить', 'lithops-tariffs' ); ?></a>
 				</div>
+				<datalist id="ltar-export-country-options">
+					<?php foreach ( $export_countries as $country_name ) : ?>
+						<option value="<?php echo esc_attr( $country_name ); ?>"></option>
+					<?php endforeach; ?>
+				</datalist>
 				<datalist id="ltar-export-city-options">
 					<?php foreach ( $export_cities as $city_name ) : ?>
 						<option value="<?php echo esc_attr( $city_name ); ?>"></option>
+					<?php endforeach; ?>
+				</datalist>
+				<datalist id="ltar-import-country-options">
+					<?php foreach ( $import_countries as $country_name ) : ?>
+						<option value="<?php echo esc_attr( $country_name ); ?>"></option>
 					<?php endforeach; ?>
 				</datalist>
 				<datalist id="ltar-import-city-options">
@@ -892,8 +1040,12 @@ class LTAR_Admin {
 						<tr>
 							<th><?php esc_html_e( 'Маршрут', 'lithops-tariffs' ); ?></th>
 							<th><?php esc_html_e( 'Сервис', 'lithops-tariffs' ); ?></th>
-							<th><?php esc_html_e( 'Цена', 'lithops-tariffs' ); ?></th>
-							<th><?php esc_html_e( 'Срок', 'lithops-tariffs' ); ?></th>
+							<th class="ltar-col-numeric"><?php self::render_sort_header( __( 'Цена от', 'lithops-tariffs' ), 'price_min', $active_order_by, $active_order ); ?></th>
+							<th class="ltar-col-numeric"><?php self::render_sort_header( __( 'Цена до', 'lithops-tariffs' ), 'price_max', $active_order_by, $active_order ); ?></th>
+							<th class="ltar-col-numeric"><?php self::render_sort_header( __( 'Цена средняя', 'lithops-tariffs' ), 'price_avg', $active_order_by, $active_order ); ?></th>
+							<th class="ltar-col-numeric"><?php self::render_sort_header( __( 'Срок от', 'lithops-tariffs' ), 'transit_min_days', $active_order_by, $active_order ); ?></th>
+							<th class="ltar-col-numeric"><?php self::render_sort_header( __( 'Срок до', 'lithops-tariffs' ), 'transit_max_days', $active_order_by, $active_order ); ?></th>
+							<th class="ltar-col-numeric"><?php self::render_sort_header( __( 'Срок средний', 'lithops-tariffs' ), 'transit_avg_days', $active_order_by, $active_order ); ?></th>
 							<th><?php esc_html_e( 'Источник', 'lithops-tariffs' ); ?></th>
 							<th class="text-end"><?php esc_html_e( 'Действия', 'lithops-tariffs' ); ?></th>
 						</tr>
@@ -901,7 +1053,7 @@ class LTAR_Admin {
 					<tbody>
 						<?php if ( empty( $rows ) ) : ?>
 							<tr>
-								<td colspan="6" class="text-muted"><?php esc_html_e( 'По текущим фильтрам строки не найдены.', 'lithops-tariffs' ); ?></td>
+								<td colspan="10" class="text-muted"><?php esc_html_e( 'По текущим фильтрам строки не найдены.', 'lithops-tariffs' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $rows as $row ) : ?>
@@ -917,8 +1069,6 @@ class LTAR_Admin {
 										trim( (string) $row->based_on_scenario ),
 									)
 								);
-								$price_value    = trim( (string) $row->currency ) . ' ' . trim( (string) $row->price_min ) . ' - ' . trim( (string) $row->price_max );
-								$transit_value  = trim( (string) $row->transit_min_days ) . ' - ' . trim( (string) $row->transit_max_days );
 								$service_detail = trim( (string) $row->service_label );
 								?>
 								<tr>
@@ -935,8 +1085,12 @@ class LTAR_Admin {
 											<div class="text-muted small"><?php echo esc_html( $service_detail ); ?></div>
 										<?php endif; ?>
 									</td>
-									<td><?php echo esc_html( $price_value ); ?></td>
-									<td><?php echo esc_html( $transit_value ); ?></td>
+									<td class="ltar-col-numeric"><?php echo esc_html( self::format_money_value( $row->price_min, (string) $row->currency ) ); ?></td>
+									<td class="ltar-col-numeric"><?php echo esc_html( self::format_money_value( $row->price_max, (string) $row->currency ) ); ?></td>
+									<td class="ltar-col-numeric"><?php echo esc_html( self::format_money_value( $row->price_avg, (string) $row->currency ) ); ?></td>
+									<td class="ltar-col-numeric"><?php echo esc_html( self::format_days_value( $row->transit_min_days ) ); ?></td>
+									<td class="ltar-col-numeric"><?php echo esc_html( self::format_days_value( $row->transit_max_days ) ); ?></td>
+									<td class="ltar-col-numeric"><?php echo esc_html( self::format_days_value( $row->transit_avg_days ) ); ?></td>
 									<td>
 										<span class="badge text-bg-light"><?php echo esc_html( (string) $row->price_source ); ?></span>
 										<?php if ( ! empty( $row->reason ) ) : ?>
