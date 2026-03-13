@@ -1,0 +1,99 @@
+.ltar-admin-wrap .lhfe-banner {
+	display: flex;
+	justify-content: space-between;
+	gap: 24px;
+	align-items: flex-start;
+	padding: 28px;
+	border-radius: 22px;
+	background: linear-gradient(135deg, #10364f 0%, #d86b12 100%);
+	color: #fff;
+	margin: 18px 0 24px;
+}
+
+.ltar-admin-wrap .lhfe-banner h1,
+.ltar-admin-wrap .lhfe-banner p {
+	color: inherit;
+}
+
+.ltar-admin-wrap .lhfe-banner-meta {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.ltar-admin-wrap .lhfe-alert {
+	border-radius: 14px;
+}
+
+.ltar-admin-wrap .lhfe-card {
+	padding: 24px;
+	border: 1px solid #d9e2ec;
+	border-radius: 20px;
+	background: #fff;
+	box-shadow: 0 12px 30px rgba(16, 36, 56, 0.04);
+	height: 100%;
+}
+
+.ltar-admin-wrap .metric-card {
+	min-height: 148px;
+}
+
+.ltar-admin-wrap .metric-title {
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #5b6b7b;
+	margin-bottom: 14px;
+}
+
+.ltar-admin-wrap .metric-value {
+	font-size: 40px;
+	line-height: 1.1;
+	font-weight: 700;
+	color: #12344d;
+}
+
+.ltar-summary-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.ltar-summary-list li {
+	word-break: break-word;
+}
+
+.ltar-copy-note {
+	margin-top: 8px;
+	font-weight: 600;
+}
+
+.ltar-search-form {
+	width: 100%;
+	max-width: 360px;
+}
+
+.ltar-table td,
+.ltar-table th {
+	vertical-align: top;
+}
+
+.ltar-table .badge {
+	font-weight: 500;
+}
+
+@media (max-width: 900px) {
+	.ltar-admin-wrap .lhfe-banner {
+		flex-direction: column;
+		border-radius: 18px;
+	}
+
+	.ltar-admin-wrap .metric-value {
+		font-size: 32px;
+	}
+
+	.ltar-search-form {
+		max-width: none;
+	}
+}
