@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Lithops Tariffs
  * Description: ERP-каталог тарифов: импорт JSON, табличный CRUD и REST-выдача тарифных строк для вторичных сайтов.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Endure Route / Lithops Group
  * Text Domain: lithops-tariffs
  * Requires at least: 5.8

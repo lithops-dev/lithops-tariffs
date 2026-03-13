@@ -1585,7 +1585,8 @@ function ltar_resolve_catalog_request( $request, $rows = array() ) {
 		}
 
 		$export_required = 'import_country_only' !== $scenario;
-		if ( $export_required ) {
+		$is_country_only = ltar_is_country_only_fallback_row( $row );
+		if ( $export_required && ! $is_country_only ) {
 			$export_ok = true;
 			if ( '' !== $export_code ) {
 				$export_ok = $row['export_country_code'] === $export_code;
