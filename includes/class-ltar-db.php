@@ -10,6 +10,42 @@ if ( ! defined( 'ABSPATH' ) ) {
 class LTAR_DB {
 
 	/**
+	 * Build WHERE clauses for catalog queries.
+	 *
+	 * @param array $args   Query arguments.
+	 * @param array $params Prepared statement params.
+	 * @return array<int,string>
+	 */
+	protected static function build_where_clauses( $args, &$params ) {
+		global $wpdb;
+
+		$args   = is_array( $args ) ? $args : array();
+		$params = array();
+		$where  = array();
+		$search = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
+
+		if ( '' !== $search ) {
+			$like    = '%' . $wpdb->esc_like( $search ) . '%';
+			$where[] = '(route_key LIKE %s OR export_country LIKE %s OR export_city LIKE %s OR import_country LIKE %s OR import_city LIKE %s OR service LIKE %s OR service_label LIKE %s)';
+			$params  = array_merge( $params, array( $like, $like, $like, $like, $like, $like, $like ) );
+		}
+
+		$export_city = isset( $args['export_city'] ) ? trim( (string) $args['export_city'] ) : '';
+		if ( '' !== $export_city ) {
+			$where[]  = 'export_city = %s';
+			$params[] = $export_city;
+		}
+
+		$import_city = isset( $args['import_city'] ) ? trim( (string) $args['import_city'] ) : '';
+		if ( '' !== $import_city ) {
+			$where[]  = 'import_city = %s';
+			$params[] = $import_city;
+		}
+
+		return $where;
+	}
+
+	/**
 	 * Get table name.
 	 *
 	 * @return string
@@ -128,16 +164,9 @@ class LTAR_DB {
 
 		$args       = is_array( $args ) ? $args : array();
 		$table_name = self::table();
-		$search     = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
 		$sql        = "SELECT * FROM {$table_name}";
-		$where      = array();
 		$params     = array();
-
-		if ( '' !== $search ) {
-			$like    = '%' . $wpdb->esc_like( $search ) . '%';
-			$where[] = '(route_key LIKE %s OR export_country LIKE %s OR export_city LIKE %s OR import_country LIKE %s OR import_city LIKE %s OR service LIKE %s)';
-			$params  = array_merge( $params, array( $like, $like, $like, $like, $like, $like ) );
-		}
+		$where      = self::build_where_clauses( $args, $params );
 
 		if ( ! empty( $where ) ) {
 			$sql .= ' WHERE ' . implode( ' AND ', $where );
@@ -147,6 +176,7 @@ class LTAR_DB {
 
 		if ( ! empty( $args['limit'] ) ) {
 			$sql .= ' LIMIT ' . max( 1, (int) $args['limit'] );
+			$sql .= ' OFFSET ' . max( 0, (int) ( $args['offset'] ?? 0 ) );
 		}
 
 		if ( ! empty( $params ) ) {
@@ -156,6 +186,62 @@ class LTAR_DB {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		return (array) $wpdb->get_results( $sql );
+	}
+
+	/**
+	 * Count rows with current filters.
+	 *
+	 * @param array $args Query arguments.
+	 * @return int
+	 */
+	public static function count_rows( $args = array() ) {
+		global $wpdb;
+
+		$table_name = self::table();
+		$sql        = "SELECT COUNT(*) FROM {$table_name}";
+		$params     = array();
+		$where      = self::build_where_clauses( $args, $params );
+
+		if ( ! empty( $where ) ) {
+			$sql .= ' WHERE ' . implode( ' AND ', $where );
+		}
+
+		if ( ! empty( $params ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			return (int) $wpdb->get_var( $wpdb->prepare( $sql, $params ) );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * Get distinct non-empty values for a whitelisted column.
+	 *
+	 * @param string $column Column name.
+	 * @return array<int,string>
+	 */
+	public static function get_distinct_values( $column ) {
+		global $wpdb;
+
+		$allowed = array(
+			'export_city',
+			'import_city',
+		);
+		$column  = sanitize_key( (string) $column );
+
+		if ( ! in_array( $column, $allowed, true ) ) {
+			return array();
+		}
+
+		$sql = 'SELECT DISTINCT ' . $column . ' FROM ' . self::table() . ' WHERE ' . $column . " <> '' ORDER BY " . $column . ' ASC';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$values = (array) $wpdb->get_col( $sql );
+		$values = array_map( 'trim', $values );
+		$values = array_filter( $values );
+
+		return array_values( array_unique( $values ) );
 	}
 
 	/**

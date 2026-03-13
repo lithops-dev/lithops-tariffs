@@ -1183,7 +1183,60 @@ function ltar_prepare_rows_for_output( $rows ) {
  * @return string
  */
 function ltar_match_string( $value ) {
-	return strtolower( trim( (string) $value ) );
+	$value = remove_accents( (string) $value );
+	$value = strtolower( trim( $value ) );
+
+	if ( '' === $value ) {
+		return '';
+	}
+
+	$value = preg_replace( '/[^a-z0-9]+/i', ' ', $value );
+	$value = preg_replace( '/\s+/', ' ', (string) $value );
+
+	return trim( (string) $value );
+}
+
+/**
+ * Build match variants for city aliases.
+ *
+ * @param mixed $value Raw city value.
+ * @return array<int,string>
+ */
+function ltar_city_match_variants( $value ) {
+	$base = ltar_match_string( $value );
+	if ( '' === $base ) {
+		return array();
+	}
+
+	$variants = array(
+		$base => $base,
+	);
+
+	$without_city = preg_replace( '/\bcity$/', '', $base );
+	$without_city = trim( preg_replace( '/\s+/', ' ', (string) $without_city ) );
+	if ( '' !== $without_city ) {
+		$variants[ $without_city ] = $without_city;
+	}
+
+	return array_values( $variants );
+}
+
+/**
+ * Compare city labels allowing simple aliases like "City" suffix.
+ *
+ * @param mixed $left  First city value.
+ * @param mixed $right Second city value.
+ * @return bool
+ */
+function ltar_city_matches( $left, $right ) {
+	$left_variants  = ltar_city_match_variants( $left );
+	$right_variants = ltar_city_match_variants( $right );
+
+	if ( empty( $left_variants ) || empty( $right_variants ) ) {
+		return false;
+	}
+
+	return ! empty( array_intersect( $left_variants, $right_variants ) );
 }
 
 /**
@@ -1638,7 +1691,7 @@ function ltar_resolve_catalog_request( $request, $rows = array() ) {
 			if ( '' !== $export_city_norm ) {
 				$export_scope = array();
 				foreach ( $city_rows as $row ) {
-					if ( ltar_match_string( $row['export_city'] ) === $export_city_norm ) {
+					if ( ltar_city_matches( $row['export_city'], $export_city ) ) {
 						$export_scope[] = $row;
 					}
 				}
@@ -1652,7 +1705,7 @@ function ltar_resolve_catalog_request( $request, $rows = array() ) {
 				if ( '' !== $import_city_norm ) {
 					$tmp = array();
 					foreach ( $export_scope as $row ) {
-						if ( ltar_match_string( $row['import_city'] ) === $import_city_norm ) {
+						if ( ltar_city_matches( $row['import_city'], $import_city ) ) {
 							$tmp[] = $row;
 						}
 					}
@@ -1669,7 +1722,7 @@ function ltar_resolve_catalog_request( $request, $rows = array() ) {
 		case 'city_to_country':
 			if ( '' !== $export_city_norm ) {
 				foreach ( $city_rows as $row ) {
-					if ( ltar_match_string( $row['export_city'] ) === $export_city_norm ) {
+					if ( ltar_city_matches( $row['export_city'], $export_city ) ) {
 						$exact_rows[] = $row;
 					}
 				}
@@ -1684,7 +1737,7 @@ function ltar_resolve_catalog_request( $request, $rows = array() ) {
 		case 'country_to_city':
 			if ( '' !== $import_city_norm ) {
 				foreach ( $city_rows as $row ) {
-					if ( ltar_match_string( $row['import_city'] ) === $import_city_norm ) {
+					if ( ltar_city_matches( $row['import_city'], $import_city ) ) {
 						$exact_rows[] = $row;
 					}
 				}
