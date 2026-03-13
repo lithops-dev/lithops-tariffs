@@ -37,8 +37,8 @@ class LTAR_Admin {
 			lmm_add_submenu(
 				'lithops-erp',
 				array(
-					'page_title' => __( 'Tariffs Catalog', 'lithops-tariffs' ),
-					'menu_title' => __( 'Tariffs Catalog', 'lithops-tariffs' ),
+					'page_title' => __( 'Каталог тарифов', 'lithops-tariffs' ),
+					'menu_title' => __( 'Каталог тарифов', 'lithops-tariffs' ),
 					'capability' => LTAR_CAP,
 					'menu_slug'  => self::MENU_SLUG,
 					'callback'   => array( __CLASS__, 'render_page' ),
@@ -49,8 +49,8 @@ class LTAR_Admin {
 		}
 
 		add_menu_page(
-			__( 'Tariffs Catalog', 'lithops-tariffs' ),
-			__( 'Tariffs Catalog', 'lithops-tariffs' ),
+			__( 'Каталог тарифов', 'lithops-tariffs' ),
+			__( 'Каталог тарифов', 'lithops-tariffs' ),
 			LTAR_CAP,
 			self::MENU_SLUG,
 			array( __CLASS__, 'render_page' ),
@@ -241,12 +241,12 @@ class LTAR_Admin {
 	 */
 	protected static function notice_config( $notice ) {
 		$map = array(
-			'imported'     => array( 'type' => 'success', 'text' => __( 'JSON imported. Catalog rows were replaced.', 'lithops-tariffs' ) ),
-			'import_empty' => array( 'type' => 'warning', 'text' => __( 'No supported tariff rows were found in the uploaded JSON.', 'lithops-tariffs' ) ),
-			'import_error' => array( 'type' => 'danger', 'text' => __( 'Could not read the uploaded JSON file.', 'lithops-tariffs' ) ),
-			'created'      => array( 'type' => 'success', 'text' => __( 'Tariff row created.', 'lithops-tariffs' ) ),
-			'updated'      => array( 'type' => 'success', 'text' => __( 'Tariff row updated.', 'lithops-tariffs' ) ),
-			'deleted'      => array( 'type' => 'warning', 'text' => __( 'Tariff row deleted.', 'lithops-tariffs' ) ),
+			'imported'     => array( 'type' => 'success', 'text' => __( 'JSON импортирован. Каталог тарифов заменён.', 'lithops-tariffs' ) ),
+			'import_empty' => array( 'type' => 'warning', 'text' => __( 'В загруженном JSON не найдено поддерживаемых строк тарифов.', 'lithops-tariffs' ) ),
+			'import_error' => array( 'type' => 'danger', 'text' => __( 'Не удалось прочитать загруженный JSON-файл.', 'lithops-tariffs' ) ),
+			'created'      => array( 'type' => 'success', 'text' => __( 'Строка тарифа создана.', 'lithops-tariffs' ) ),
+			'updated'      => array( 'type' => 'success', 'text' => __( 'Строка тарифа обновлена.', 'lithops-tariffs' ) ),
+			'deleted'      => array( 'type' => 'warning', 'text' => __( 'Строка тарифа удалена.', 'lithops-tariffs' ) ),
 		);
 
 		return $map[ $notice ] ?? array();
@@ -389,8 +389,8 @@ class LTAR_Admin {
 				'current'   => $current,
 				'total'     => $total,
 				'type'      => 'array',
-				'prev_text' => __( 'Previous', 'lithops-tariffs' ),
-				'next_text' => __( 'Next', 'lithops-tariffs' ),
+				'prev_text' => __( 'Назад', 'lithops-tariffs' ),
+				'next_text' => __( 'Вперёд', 'lithops-tariffs' ),
 				'mid_size'  => 1,
 				'end_size'  => 1,
 			)
@@ -522,7 +522,7 @@ class LTAR_Admin {
 						this.editorOpen = false;
 					},
 					editorTitle() {
-						return this.editorMode === 'edit' ? 'Edit tariff row' : 'New tariff row';
+						return this.editorMode === 'edit' ? 'Редактирование тарифа' : 'Новая строка тарифа';
 					},
 					copyField(field, label) {
 						if (!field || !field.value) {
@@ -562,12 +562,12 @@ class LTAR_Admin {
 		?>
 		<div class="lhfe-banner">
 			<div>
-				<h1 class="mb-2"><?php esc_html_e( 'Tariffs Catalog', 'lithops-tariffs' ); ?></h1>
-				<p class="mb-0"><?php esc_html_e( 'Central ERP tariff catalog for child sites, SEO placeholders, route previews and fallback-based resolution.', 'lithops-tariffs' ); ?></p>
+				<h1 class="mb-2"><?php esc_html_e( 'Каталог тарифов', 'lithops-tariffs' ); ?></h1>
+				<p class="mb-0"><?php esc_html_e( 'Центральный ERP-каталог тарифов для дочерних сайтов, SEO-плейсхолдеров, превью маршрутов и fallback-резолвинга.', 'lithops-tariffs' ); ?></p>
 			</div>
 			<div class="lhfe-banner-meta">
 				<span class="badge text-bg-light"><?php echo esc_html( 'v' . LTAR_VERSION ); ?></span>
-				<span class="badge text-bg-info"><?php echo esc_html( sprintf( __( 'Rows: %d', 'lithops-tariffs' ), (int) ( $stats['total'] ?? 0 ) ) ); ?></span>
+				<span class="badge text-bg-info"><?php echo esc_html( sprintf( __( 'Строк: %d', 'lithops-tariffs' ), (int) ( $stats['total'] ?? 0 ) ) ); ?></span>
 			</div>
 		</div>
 
@@ -580,25 +580,25 @@ class LTAR_Admin {
 		<div class="row g-4 mb-4">
 			<div class="col-xl-3 col-md-6">
 				<div class="lhfe-card metric-card">
-					<div class="metric-title"><?php esc_html_e( 'Total rows', 'lithops-tariffs' ); ?></div>
+					<div class="metric-title"><?php esc_html_e( 'Всего строк', 'lithops-tariffs' ); ?></div>
 					<div class="metric-value"><?php echo esc_html( (int) ( $stats['total'] ?? 0 ) ); ?></div>
 				</div>
 			</div>
 			<div class="col-xl-3 col-md-6">
 				<div class="lhfe-card metric-card">
-					<div class="metric-title"><?php esc_html_e( 'Import countries', 'lithops-tariffs' ); ?></div>
+					<div class="metric-title"><?php esc_html_e( 'Стран импорта', 'lithops-tariffs' ); ?></div>
 					<div class="metric-value"><?php echo esc_html( (int) ( $stats['import_countries'] ?? 0 ) ); ?></div>
 				</div>
 			</div>
 			<div class="col-xl-3 col-md-6">
 				<div class="lhfe-card metric-card">
-					<div class="metric-title"><?php esc_html_e( 'Export countries', 'lithops-tariffs' ); ?></div>
+					<div class="metric-title"><?php esc_html_e( 'Стран экспорта', 'lithops-tariffs' ); ?></div>
 					<div class="metric-value"><?php echo esc_html( (int) ( $stats['export_countries'] ?? 0 ) ); ?></div>
 				</div>
 			</div>
 			<div class="col-xl-3 col-md-6">
 				<div class="lhfe-card metric-card">
-					<div class="metric-title"><?php esc_html_e( 'Services', 'lithops-tariffs' ); ?></div>
+					<div class="metric-title"><?php esc_html_e( 'Сервисов', 'lithops-tariffs' ); ?></div>
 					<div class="metric-value"><?php echo esc_html( (int) ( $stats['services'] ?? 0 ) ); ?></div>
 				</div>
 			</div>
@@ -622,48 +622,48 @@ class LTAR_Admin {
 		<div class="row g-4 mb-4">
 			<div class="col-xl-6">
 				<div class="lhfe-card">
-					<h2 class="h4 mb-3"><?php esc_html_e( 'Import JSON', 'lithops-tariffs' ); ?></h2>
-					<p class="mb-3"><?php esc_html_e( 'Import replaces the current catalog. Both flat row arrays and structured tariff payloads are supported.', 'lithops-tariffs' ); ?></p>
+					<h2 class="h4 mb-3"><?php esc_html_e( 'Импорт JSON', 'lithops-tariffs' ); ?></h2>
+					<p class="mb-3"><?php esc_html_e( 'Импорт полностью заменяет текущий каталог. Поддерживаются как плоские массивы строк, так и структурированные тарифные payload.', 'lithops-tariffs' ); ?></p>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 						<?php wp_nonce_field( 'ltar_import_json' ); ?>
 						<input type="hidden" name="action" value="ltar_import_json">
 						<input type="hidden" name="ltar_return_to" value="<?php echo esc_attr( $return_to ); ?>">
 						<div class="mb-3">
-							<label class="form-label" for="ltar-json-file"><?php esc_html_e( 'JSON file', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-json-file"><?php esc_html_e( 'JSON-файл', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-json-file" type="file" name="ltar_json_file" accept=".json,application/json" required>
 						</div>
 						<button type="submit" class="btn btn-primary">
-							<i class="bi bi-upload me-1"></i><?php esc_html_e( 'Import and replace catalog', 'lithops-tariffs' ); ?>
+							<i class="bi bi-upload me-1"></i><?php esc_html_e( 'Импортировать и заменить каталог', 'lithops-tariffs' ); ?>
 						</button>
 					</form>
 					<ul class="list-unstyled mt-4 mb-0 ltar-summary-list">
-						<li><strong><?php esc_html_e( 'Last file:', 'lithops-tariffs' ); ?></strong> <?php echo esc_html( ! empty( $settings['last_import_name'] ) ? $settings['last_import_name'] : __( 'none', 'lithops-tariffs' ) ); ?></li>
-						<li><strong><?php esc_html_e( 'Last import:', 'lithops-tariffs' ); ?></strong> <?php echo esc_html( ! empty( $settings['last_import_gmt'] ) ? get_date_from_gmt( $settings['last_import_gmt'], 'd.m.Y H:i' ) : __( 'never', 'lithops-tariffs' ) ); ?></li>
-						<li><strong><?php esc_html_e( 'Rows after import:', 'lithops-tariffs' ); ?></strong> <?php echo esc_html( (int) ( $settings['last_import_rows'] ?? 0 ) ); ?></li>
+						<li><strong><?php esc_html_e( 'Последний файл:', 'lithops-tariffs' ); ?></strong> <?php echo esc_html( ! empty( $settings['last_import_name'] ) ? $settings['last_import_name'] : __( 'не было', 'lithops-tariffs' ) ); ?></li>
+						<li><strong><?php esc_html_e( 'Последний импорт:', 'lithops-tariffs' ); ?></strong> <?php echo esc_html( ! empty( $settings['last_import_gmt'] ) ? get_date_from_gmt( $settings['last_import_gmt'], 'd.m.Y H:i' ) : __( 'никогда', 'lithops-tariffs' ) ); ?></li>
+						<li><strong><?php esc_html_e( 'Строк после импорта:', 'lithops-tariffs' ); ?></strong> <?php echo esc_html( (int) ( $settings['last_import_rows'] ?? 0 ) ); ?></li>
 					</ul>
 				</div>
 			</div>
 			<div class="col-xl-6">
 				<div class="lhfe-card">
-					<h2 class="h4 mb-3"><?php esc_html_e( 'REST access for child sites', 'lithops-tariffs' ); ?></h2>
-					<p><?php esc_html_e( 'Child sites consume the ERP catalog through the bridge layer. They can also request a single resolved row through the ERP resolver endpoint.', 'lithops-tariffs' ); ?></p>
+					<h2 class="h4 mb-3"><?php esc_html_e( 'REST-доступ для дочерних сайтов', 'lithops-tariffs' ); ?></h2>
+					<p><?php esc_html_e( 'Дочерние сайты получают ERP-каталог через bridge-слой. Также они могут запрашивать одну уже resolved-строку через ERP endpoint.', 'lithops-tariffs' ); ?></p>
 					<div class="mb-3">
 						<label class="form-label" for="ltar-endpoint-copy"><?php esc_html_e( 'Endpoint', 'lithops-tariffs' ); ?></label>
 						<div class="input-group">
 							<input x-ref="endpointField" id="ltar-endpoint-copy" class="form-control" type="text" readonly value="<?php echo esc_attr( $endpoint ); ?>">
-							<button class="btn btn-outline-secondary" type="button" @click.prevent="copyField($refs.endpointField, '<?php echo esc_attr__( 'Endpoint', 'lithops-tariffs' ); ?>')"><?php esc_html_e( 'Copy', 'lithops-tariffs' ); ?></button>
+							<button class="btn btn-outline-secondary" type="button" @click.prevent="copyField($refs.endpointField, '<?php echo esc_attr__( 'Endpoint', 'lithops-tariffs' ); ?>')"><?php esc_html_e( 'Копировать', 'lithops-tariffs' ); ?></button>
 						</div>
 					</div>
 					<div class="mb-3">
-						<label class="form-label" for="ltar-token-copy"><?php esc_html_e( 'Access token', 'lithops-tariffs' ); ?></label>
+						<label class="form-label" for="ltar-token-copy"><?php esc_html_e( 'Токен доступа', 'lithops-tariffs' ); ?></label>
 						<div class="input-group">
 							<input x-ref="tokenField" id="ltar-token-copy" class="form-control" type="text" readonly value="<?php echo esc_attr( $token ); ?>">
-							<button class="btn btn-outline-secondary" type="button" @click.prevent="copyField($refs.tokenField, '<?php echo esc_attr__( 'Access token', 'lithops-tariffs' ); ?>')"><?php esc_html_e( 'Copy', 'lithops-tariffs' ); ?></button>
+							<button class="btn btn-outline-secondary" type="button" @click.prevent="copyField($refs.tokenField, '<?php echo esc_attr__( 'Токен доступа', 'lithops-tariffs' ); ?>')"><?php esc_html_e( 'Копировать', 'lithops-tariffs' ); ?></button>
 						</div>
 					</div>
 					<div class="alert alert-info mb-0">
-						<?php echo esc_html( $shared_token ? __( 'Using the shared enrollment token from ERP Sites Hub.', 'lithops-tariffs' ) : __( 'Using the local Tariffs plugin token.', 'lithops-tariffs' ) ); ?>
-						<template x-if="copied"><div class="ltar-copy-note" x-text="copied + ' copied'"></div></template>
+						<?php echo esc_html( $shared_token ? __( 'Используется общий enrollment token из ERP Sites Hub.', 'lithops-tariffs' ) : __( 'Используется локальный токен плагина Tariffs.', 'lithops-tariffs' ) ); ?>
+						<template x-if="copied"><div class="ltar-copy-note" x-text="copied + ' скопировано'"></div></template>
 					</div>
 				</div>
 			</div>
@@ -699,13 +699,13 @@ class LTAR_Admin {
 		<div class="lhfe-card ltar-table-card">
 			<div class="ltar-toolbar">
 				<div>
-					<h2 class="h4 mb-1"><?php esc_html_e( 'Catalog rows', 'lithops-tariffs' ); ?></h2>
+					<h2 class="h4 mb-1"><?php esc_html_e( 'Каталог строк', 'lithops-tariffs' ); ?></h2>
 					<p class="ltar-toolbar-meta mb-0">
 						<?php
 						echo esc_html(
 							sprintf(
 								/* translators: 1: first row number, 2: last row number, 3: total rows */
-								__( 'Showing %1$d-%2$d of %3$d rows', 'lithops-tariffs' ),
+								__( 'Показано %1$d-%2$d из %3$d строк', 'lithops-tariffs' ),
 								(int) $shown_from,
 								(int) $shown_to,
 								(int) $total_rows
@@ -716,23 +716,23 @@ class LTAR_Admin {
 				</div>
 				<div class="ltar-toolbar-actions">
 					<button type="button" class="btn btn-primary" @click.prevent="openCreate()">
-						<i class="bi bi-plus-circle me-1"></i><?php esc_html_e( 'New tariff row', 'lithops-tariffs' ); ?>
+						<i class="bi bi-plus-circle me-1"></i><?php esc_html_e( 'Новая строка тарифа', 'lithops-tariffs' ); ?>
 					</button>
 				</div>
 			</div>
 
 			<details class="ltar-fallback-details mb-4">
-				<summary><?php esc_html_e( 'Fallback rules and exceptions', 'lithops-tariffs' ); ?></summary>
+				<summary><?php esc_html_e( 'Правила fallback и исключения', 'lithops-tariffs' ); ?></summary>
 				<div class="ltar-fallback-copy">
-					<p><?php esc_html_e( 'Resolver order is deterministic and designed to return a value even when the exact lane is missing.', 'lithops-tariffs' ); ?></p>
+					<p><?php esc_html_e( 'Порядок работы resolver детерминирован и рассчитан на то, чтобы вернуть значение даже при отсутствии точного маршрута.', 'lithops-tariffs' ); ?></p>
 					<ul>
-						<li><?php esc_html_e( '1. First try the exact city-to-city row for the requested service.', 'lithops-tariffs' ); ?></li>
-						<li><?php esc_html_e( '2. If exact city-to-city is missing, try the country-to-country stub for the same export/import countries.', 'lithops-tariffs' ); ?></li>
-						<li><?php esc_html_e( '3. If country-to-country is also missing, use the import-country-only default.', 'lithops-tariffs' ); ?></li>
-						<li><?php esc_html_e( '4. If the exact row exists but one metric is missing, only the missing metric is filled from lower fallback layers.', 'lithops-tariffs' ); ?></li>
-						<li><?php esc_html_e( '5. Pages usually request import-country-only data; route CPTs can request city-to-country, country-to-city or city-to-city.', 'lithops-tariffs' ); ?></li>
-						<li><?php esc_html_e( '6. City aliases are normalized for matching, so labels like "Ho Chi Minh" and "Ho Chi Minh City" resolve to the same lane.', 'lithops-tariffs' ); ?></li>
-						<li><?php esc_html_e( '7. If no layer contains a value for a requested service field, the field stays blank.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '1. Сначала ищется точная строка city-to-city для запрошенного сервиса.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '2. Если точного city-to-city нет, используется country-to-country заглушка для тех же стран экспорта и импорта.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '3. Если нет и country-to-country, используется import-country-only заглушка.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '4. Если точная строка существует, но в ней не хватает одного из показателей, добирается только недостающее поле из нижних fallback-слоёв.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '5. Обычные Pages обычно запрашивают import-country-only, а route CPT могут запрашивать city-to-country, country-to-city или city-to-city.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '6. Названия городов нормализуются при поиске, поэтому "Ho Chi Minh" и "Ho Chi Minh City" считаются одним и тем же маршрутом.', 'lithops-tariffs' ); ?></li>
+						<li><?php esc_html_e( '7. Если ни один слой не содержит значения для нужного поля сервиса, поле остаётся пустым.', 'lithops-tariffs' ); ?></li>
 					</ul>
 				</div>
 			</details>
@@ -741,19 +741,19 @@ class LTAR_Admin {
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">
 				<div class="ltar-filter-grid">
 					<div>
-						<label class="form-label" for="ltar-search"><?php esc_html_e( 'Search', 'lithops-tariffs' ); ?></label>
-						<input class="form-control" id="ltar-search" type="search" name="ltar_search" placeholder="<?php esc_attr_e( 'Route key, country, city, service', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['search'] ?? '' ); ?>">
+						<label class="form-label" for="ltar-search"><?php esc_html_e( 'Поиск', 'lithops-tariffs' ); ?></label>
+						<input class="form-control" id="ltar-search" type="search" name="ltar_search" placeholder="<?php esc_attr_e( 'Ключ маршрута, страна, город, сервис', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['search'] ?? '' ); ?>">
 					</div>
 					<div>
-						<label class="form-label" for="ltar-export-city-filter"><?php esc_html_e( 'Origin city', 'lithops-tariffs' ); ?></label>
-						<input class="form-control" id="ltar-export-city-filter" type="text" name="ltar_export_city" list="ltar-export-city-options" placeholder="<?php esc_attr_e( 'Existing export city', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['export_city'] ?? '' ); ?>">
+						<label class="form-label" for="ltar-export-city-filter"><?php esc_html_e( 'Город отправления', 'lithops-tariffs' ); ?></label>
+						<input class="form-control" id="ltar-export-city-filter" type="text" name="ltar_export_city" list="ltar-export-city-options" placeholder="<?php esc_attr_e( 'Существующий город экспорта', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['export_city'] ?? '' ); ?>">
 					</div>
 					<div>
-						<label class="form-label" for="ltar-import-city-filter"><?php esc_html_e( 'Destination city', 'lithops-tariffs' ); ?></label>
-						<input class="form-control" id="ltar-import-city-filter" type="text" name="ltar_import_city" list="ltar-import-city-options" placeholder="<?php esc_attr_e( 'Existing import city', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['import_city'] ?? '' ); ?>">
+						<label class="form-label" for="ltar-import-city-filter"><?php esc_html_e( 'Город назначения', 'lithops-tariffs' ); ?></label>
+						<input class="form-control" id="ltar-import-city-filter" type="text" name="ltar_import_city" list="ltar-import-city-options" placeholder="<?php esc_attr_e( 'Существующий город импорта', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['import_city'] ?? '' ); ?>">
 					</div>
 					<div>
-						<label class="form-label" for="ltar-per-page"><?php esc_html_e( 'Rows per page', 'lithops-tariffs' ); ?></label>
+						<label class="form-label" for="ltar-per-page"><?php esc_html_e( 'Строк на странице', 'lithops-tariffs' ); ?></label>
 						<select class="form-select" id="ltar-per-page" name="per_page">
 							<?php foreach ( array( 25, 50, 100, 200 ) as $size ) : ?>
 								<option value="<?php echo esc_attr( $size ); ?>" <?php selected( $per_page, $size ); ?>><?php echo esc_html( $size ); ?></option>
@@ -762,8 +762,8 @@ class LTAR_Admin {
 					</div>
 				</div>
 				<div class="ltar-filter-actions">
-					<button type="submit" class="btn btn-outline-primary"><?php esc_html_e( 'Apply filters', 'lithops-tariffs' ); ?></button>
-					<a class="btn btn-outline-secondary" href="<?php echo esc_url( $reset_url ); ?>"><?php esc_html_e( 'Reset', 'lithops-tariffs' ); ?></a>
+					<button type="submit" class="btn btn-outline-primary"><?php esc_html_e( 'Применить фильтры', 'lithops-tariffs' ); ?></button>
+					<a class="btn btn-outline-secondary" href="<?php echo esc_url( $reset_url ); ?>"><?php esc_html_e( 'Сбросить', 'lithops-tariffs' ); ?></a>
 				</div>
 				<datalist id="ltar-export-city-options">
 					<?php foreach ( $export_cities as $city_name ) : ?>
@@ -781,18 +781,18 @@ class LTAR_Admin {
 				<table class="table table-sm table-hover ltar-table align-middle">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'Route', 'lithops-tariffs' ); ?></th>
-							<th><?php esc_html_e( 'Service', 'lithops-tariffs' ); ?></th>
-							<th><?php esc_html_e( 'Price', 'lithops-tariffs' ); ?></th>
-							<th><?php esc_html_e( 'Transit', 'lithops-tariffs' ); ?></th>
-							<th><?php esc_html_e( 'Source', 'lithops-tariffs' ); ?></th>
-							<th class="text-end"><?php esc_html_e( 'Actions', 'lithops-tariffs' ); ?></th>
+							<th><?php esc_html_e( 'Маршрут', 'lithops-tariffs' ); ?></th>
+							<th><?php esc_html_e( 'Сервис', 'lithops-tariffs' ); ?></th>
+							<th><?php esc_html_e( 'Цена', 'lithops-tariffs' ); ?></th>
+							<th><?php esc_html_e( 'Срок', 'lithops-tariffs' ); ?></th>
+							<th><?php esc_html_e( 'Источник', 'lithops-tariffs' ); ?></th>
+							<th class="text-end"><?php esc_html_e( 'Действия', 'lithops-tariffs' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php if ( empty( $rows ) ) : ?>
 							<tr>
-								<td colspan="6" class="text-muted"><?php esc_html_e( 'No rows matched the current filters.', 'lithops-tariffs' ); ?></td>
+								<td colspan="6" class="text-muted"><?php esc_html_e( 'По текущим фильтрам строки не найдены.', 'lithops-tariffs' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $rows as $row ) : ?>
@@ -835,13 +835,13 @@ class LTAR_Admin {
 										<?php endif; ?>
 									</td>
 									<td class="text-end">
-										<button type="button" class="btn btn-sm btn-outline-primary" @click.prevent="openEditor(<?php echo esc_attr( $row_id ); ?>)"><?php esc_html_e( 'Edit', 'lithops-tariffs' ); ?></button>
-										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="d-inline" onsubmit="return confirm('<?php echo esc_js( __( 'Delete this tariff row?', 'lithops-tariffs' ) ); ?>');">
+										<button type="button" class="btn btn-sm btn-outline-primary" @click.prevent="openEditor(<?php echo esc_attr( $row_id ); ?>)"><?php esc_html_e( 'Редактировать', 'lithops-tariffs' ); ?></button>
+										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="d-inline" onsubmit="return confirm('<?php echo esc_js( __( 'Удалить эту строку тарифа?', 'lithops-tariffs' ) ); ?>');">
 											<?php wp_nonce_field( 'ltar_delete_row' ); ?>
 											<input type="hidden" name="action" value="ltar_delete_row">
 											<input type="hidden" name="ltar_row_id" value="<?php echo esc_attr( $row_id ); ?>">
 											<input type="hidden" name="ltar_return_to" value="<?php echo esc_attr( $return_to ); ?>">
-											<button type="submit" class="btn btn-sm btn-outline-danger"><?php esc_html_e( 'Delete', 'lithops-tariffs' ); ?></button>
+											<button type="submit" class="btn btn-sm btn-outline-danger"><?php esc_html_e( 'Удалить', 'lithops-tariffs' ); ?></button>
 										</form>
 									</td>
 								</tr>
@@ -852,7 +852,7 @@ class LTAR_Admin {
 			</div>
 
 			<?php if ( ! empty( $pagination_links ) ) : ?>
-				<nav class="ltar-pagination" aria-label="<?php esc_attr_e( 'Catalog pagination', 'lithops-tariffs' ); ?>">
+				<nav class="ltar-pagination" aria-label="<?php esc_attr_e( 'Пагинация каталога', 'lithops-tariffs' ); ?>">
 					<?php foreach ( $pagination_links as $link ) : ?>
 						<?php echo wp_kses_post( $link ); ?>
 					<?php endforeach; ?>
@@ -875,7 +875,7 @@ class LTAR_Admin {
 				<div class="ltar-modal-header">
 					<div>
 						<h2 class="h4 mb-1" x-text="editorTitle()"></h2>
-						<p class="text-muted mb-0"><?php esc_html_e( 'Create or update a normalized ERP tariff row.', 'lithops-tariffs' ); ?></p>
+						<p class="text-muted mb-0"><?php esc_html_e( 'Создание или редактирование нормализованной ERP-строки тарифа.', 'lithops-tariffs' ); ?></p>
 					</div>
 					<button type="button" class="btn btn-outline-secondary btn-sm" @click.prevent="closeEditor()">
 						<i class="bi bi-x-lg"></i>
@@ -890,108 +890,108 @@ class LTAR_Admin {
 
 					<div class="row g-3">
 						<div class="col-12">
-							<label class="form-label" for="ltar-editor-route-key"><?php esc_html_e( 'Route key', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-route-key"><?php esc_html_e( 'Ключ маршрута', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-route-key" type="text" name="route_key" x-model="editor.route_key">
 						</div>
 
 						<div class="col-md-6">
-							<label class="form-label" for="ltar-editor-service"><?php esc_html_e( 'Service', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-service"><?php esc_html_e( 'Сервис', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-service" type="text" name="service" x-model="editor.service" required>
 						</div>
 						<div class="col-md-6">
-							<label class="form-label" for="ltar-editor-service-label"><?php esc_html_e( 'Service label', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-service-label"><?php esc_html_e( 'Название сервиса', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-service-label" type="text" name="service_label" x-model="editor.service_label">
 						</div>
 
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-export-country-code"><?php esc_html_e( 'Export country code', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-export-country-code"><?php esc_html_e( 'Код страны экспорта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-export-country-code" type="text" name="export_country_code" x-model="editor.export_country_code" maxlength="2">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-export-country"><?php esc_html_e( 'Export country', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-export-country"><?php esc_html_e( 'Страна экспорта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-export-country" type="text" name="export_country" x-model="editor.export_country">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-export-city"><?php esc_html_e( 'Export city', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-export-city"><?php esc_html_e( 'Город экспорта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-export-city" type="text" name="export_city" x-model="editor.export_city">
 						</div>
 
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-import-country-code"><?php esc_html_e( 'Import country code', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-import-country-code"><?php esc_html_e( 'Код страны импорта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-import-country-code" type="text" name="import_country_code" x-model="editor.import_country_code" maxlength="2" required>
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-import-country"><?php esc_html_e( 'Import country', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-import-country"><?php esc_html_e( 'Страна импорта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-import-country" type="text" name="import_country" x-model="editor.import_country">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-import-city"><?php esc_html_e( 'Import city', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-import-city"><?php esc_html_e( 'Город импорта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-import-city" type="text" name="import_city" x-model="editor.import_city">
 						</div>
 
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-unit"><?php esc_html_e( 'Unit', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-unit"><?php esc_html_e( 'Единица', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-unit" type="text" name="unit" x-model="editor.unit">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-currency"><?php esc_html_e( 'Currency', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-currency"><?php esc_html_e( 'Валюта', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-currency" type="text" name="currency" x-model="editor.currency">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-price-source"><?php esc_html_e( 'Price source', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-price-source"><?php esc_html_e( 'Источник цены', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-price-source" type="text" name="price_source" x-model="editor.price_source">
 						</div>
 
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-price-min"><?php esc_html_e( 'Price min', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-price-min"><?php esc_html_e( 'Цена min', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-price-min" type="text" name="price_min" x-model="editor.price_min">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-price-max"><?php esc_html_e( 'Price max', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-price-max"><?php esc_html_e( 'Цена max', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-price-max" type="text" name="price_max" x-model="editor.price_max">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-price-avg"><?php esc_html_e( 'Price avg', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-price-avg"><?php esc_html_e( 'Цена avg', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-price-avg" type="text" name="price_avg" x-model="editor.price_avg">
 						</div>
 
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-transit-min"><?php esc_html_e( 'Transit min days', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-transit-min"><?php esc_html_e( 'Срок min, дней', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-transit-min" type="text" name="transit_min_days" x-model="editor.transit_min_days">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-transit-max"><?php esc_html_e( 'Transit max days', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-transit-max"><?php esc_html_e( 'Срок max, дней', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-transit-max" type="text" name="transit_max_days" x-model="editor.transit_max_days">
 						</div>
 						<div class="col-md-4">
-							<label class="form-label" for="ltar-editor-transit-avg"><?php esc_html_e( 'Transit avg days', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-transit-avg"><?php esc_html_e( 'Срок avg, дней', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-transit-avg" type="text" name="transit_avg_days" x-model="editor.transit_avg_days">
 						</div>
 
 						<div class="col-md-6">
-							<label class="form-label" for="ltar-editor-based-on-scenario"><?php esc_html_e( 'Based on scenario', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-based-on-scenario"><?php esc_html_e( 'Базовый сценарий', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-based-on-scenario" type="text" name="based_on_scenario" x-model="editor.based_on_scenario">
 						</div>
 						<div class="col-md-6">
-							<label class="form-label" for="ltar-editor-reason"><?php esc_html_e( 'Reason', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-reason"><?php esc_html_e( 'Причина / reason', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-reason" type="text" name="reason" x-model="editor.reason">
 						</div>
 
 						<div class="col-12">
-							<label class="form-label" for="ltar-editor-based-on-route"><?php esc_html_e( 'Based on route', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-based-on-route"><?php esc_html_e( 'Базовый маршрут', 'lithops-tariffs' ); ?></label>
 							<input class="form-control" id="ltar-editor-based-on-route" type="text" name="based_on_route" x-model="editor.based_on_route">
 						</div>
 
 						<div class="col-12">
-							<label class="form-label" for="ltar-editor-notes"><?php esc_html_e( 'Notes', 'lithops-tariffs' ); ?></label>
+							<label class="form-label" for="ltar-editor-notes"><?php esc_html_e( 'Заметки', 'lithops-tariffs' ); ?></label>
 							<textarea class="form-control" id="ltar-editor-notes" name="notes" rows="4" x-model="editor.notes"></textarea>
 						</div>
 					</div>
 
 					<div class="ltar-modal-footer">
-						<button type="button" class="btn btn-outline-secondary" @click.prevent="closeEditor()"><?php esc_html_e( 'Cancel', 'lithops-tariffs' ); ?></button>
+						<button type="button" class="btn btn-outline-secondary" @click.prevent="closeEditor()"><?php esc_html_e( 'Отмена', 'lithops-tariffs' ); ?></button>
 						<button type="submit" class="btn btn-primary">
-							<i class="bi bi-save me-1"></i><?php esc_html_e( 'Save row', 'lithops-tariffs' ); ?>
+							<i class="bi bi-save me-1"></i><?php esc_html_e( 'Сохранить строку', 'lithops-tariffs' ); ?>
 						</button>
 					</div>
 				</form>

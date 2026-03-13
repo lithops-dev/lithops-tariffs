@@ -4,7 +4,7 @@ Tags: erp, tariffs, json, seo, logistics
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPLv2 or later
 
 Central ERP tariffs catalog for Endure Route. Imports JSON, stores normalized tariff rows, provides CRUD in wp-admin, and exposes a protected REST endpoint for secondary sites.
@@ -38,6 +38,9 @@ Supported formats:
 * Stored tokens are encrypted with WordPress salts when OpenSSL is available.
 
 == Changelog ==
+
+= 1.1.4 =
+* Translated the ERP tariffs admin screen to Russian for the catalog, filters, modal editor and fallback explanation block.
 
 = 1.1.3 =
 * Added pagination, city filters, modal create/edit flow and fallback explainer to the ERP catalog screen.

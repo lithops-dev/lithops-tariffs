@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Lithops Tariffs
  * Description: ERP-каталог тарифов: импорт JSON, табличный CRUD и REST-выдача тарифных строк для вторичных сайтов.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Endure Route / Lithops Group
  * Text Domain: lithops-tariffs
  * Requires at least: 5.8
@@ -60,7 +60,7 @@ add_filter(
 	'lg_plugin_capabilities',
 	function( $caps ) {
 		$caps['lithops-tariffs'] = array(
-			'label'       => __( 'Tariffs Catalog', 'lithops-tariffs' ),
+			'label'       => __( 'Каталог тарифов', 'lithops-tariffs' ),
 			'cap'         => LTAR_CAP,
 			'description' => __( 'Импорт и управление ERP-каталогом тарифов.', 'lithops-tariffs' ),
 		);
