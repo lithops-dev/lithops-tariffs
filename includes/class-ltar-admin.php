@@ -270,6 +270,7 @@ class LTAR_Admin {
 			'ltar_export_city',
 			'ltar_import_country',
 			'ltar_import_city',
+			'ltar_service',
 			'ltar_order_by',
 			'ltar_order',
 			'per_page',
@@ -523,17 +524,18 @@ class LTAR_Admin {
 
 		$settings      = ltar_get_settings();
 		$stats         = LTAR_DB::get_stats();
-		$search        = isset( $_GET['ltar_search'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$search         = isset( $_GET['ltar_search'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_search'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$export_country = isset( $_GET['ltar_export_country'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_export_country'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$export_city   = isset( $_GET['ltar_export_city'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_export_city'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$export_city    = isset( $_GET['ltar_export_city'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_export_city'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$import_country = isset( $_GET['ltar_import_country'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_import_country'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$import_city   = isset( $_GET['ltar_import_city'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_import_city'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order_by      = self::sanitize_sort_field( isset( $_GET['ltar_order_by'] ) ? wp_unslash( $_GET['ltar_order_by'] ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$order         = self::sanitize_sort_direction( isset( $_GET['ltar_order'] ) ? wp_unslash( $_GET['ltar_order'] ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$per_page      = isset( $_GET['per_page'] ) ? absint( wp_unslash( $_GET['per_page'] ) ) : 50; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$per_page      = in_array( $per_page, array( 25, 50, 100, 200 ), true ) ? $per_page : 50;
-		$paged         = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$notice        = isset( $_GET['ltar_notice'] ) ? sanitize_key( wp_unslash( $_GET['ltar_notice'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$import_city    = isset( $_GET['ltar_import_city'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_import_city'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$service        = isset( $_GET['ltar_service'] ) ? sanitize_text_field( wp_unslash( $_GET['ltar_service'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_by       = self::sanitize_sort_field( isset( $_GET['ltar_order_by'] ) ? wp_unslash( $_GET['ltar_order_by'] ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order          = self::sanitize_sort_direction( isset( $_GET['ltar_order'] ) ? wp_unslash( $_GET['ltar_order'] ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$per_page       = isset( $_GET['per_page'] ) ? absint( wp_unslash( $_GET['per_page'] ) ) : 50; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$per_page       = in_array( $per_page, array( 25, 50, 100, 200 ), true ) ? $per_page : 50;
+		$paged          = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$notice         = isset( $_GET['ltar_notice'] ) ? sanitize_key( wp_unslash( $_GET['ltar_notice'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$notice_config = self::notice_config( $notice );
 		$edit_id       = isset( $_GET['ltar_edit'] ) ? absint( wp_unslash( $_GET['ltar_edit'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$edit_row      = $edit_id > 0 ? LTAR_DB::get_row( $edit_id ) : null;
@@ -546,6 +548,7 @@ class LTAR_Admin {
 			'export_city'    => $export_city,
 			'import_country' => $import_country,
 			'import_city'    => $import_city,
+			'service'        => $service,
 			'order_by'       => $order_by,
 			'order'          => $order,
 		);
@@ -579,7 +582,7 @@ class LTAR_Admin {
 			'initialEditId'  => $edit_id,
 		);
 		$return_to = self::current_page_url( array(), array( 'ltar_notice', 'ltar_edit' ) );
-		$reset_url = self::current_page_url( array(), array( 'ltar_search', 'ltar_export_country', 'ltar_export_city', 'ltar_import_country', 'ltar_import_city', 'ltar_order_by', 'ltar_order', 'paged', 'ltar_notice', 'ltar_edit' ) );
+		$reset_url = self::current_page_url( array(), array( 'ltar_search', 'ltar_export_country', 'ltar_export_city', 'ltar_import_country', 'ltar_import_city', 'ltar_service', 'ltar_order_by', 'ltar_order', 'paged', 'ltar_notice', 'ltar_edit' ) );
 
 		self::render_page_script( $alpine_config );
 		?>
@@ -922,6 +925,7 @@ class LTAR_Admin {
 		$export_cities    = LTAR_DB::get_distinct_values( 'export_city' );
 		$import_countries = LTAR_DB::get_distinct_values( 'import_country' );
 		$import_cities    = LTAR_DB::get_distinct_values( 'import_city' );
+		$services         = LTAR_DB::get_distinct_values( 'service' );
 		$active_order_by  = self::sanitize_sort_field( $filters['order_by'] ?? '' );
 		$active_order     = self::sanitize_sort_direction( $filters['order'] ?? '' );
 		$total_pages      = max( 1, (int) ceil( max( 1, $total_rows ) / max( 1, $per_page ) ) );
@@ -1000,6 +1004,10 @@ class LTAR_Admin {
 						<input class="form-control" id="ltar-import-city-filter" type="text" name="ltar_import_city" list="ltar-import-city-options" placeholder="<?php esc_attr_e( 'Существующий город импорта', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['import_city'] ?? '' ); ?>">
 					</div>
 					<div>
+						<label class="form-label" for="ltar-service-filter"><?php esc_html_e( 'Сервис', 'lithops-tariffs' ); ?></label>
+						<input class="form-control" id="ltar-service-filter" type="text" name="ltar_service" list="ltar-service-options" placeholder="<?php esc_attr_e( 'air, reefer40, sea_fcl_20', 'lithops-tariffs' ); ?>" value="<?php echo esc_attr( $filters['service'] ?? '' ); ?>">
+					</div>
+					<div>
 						<label class="form-label" for="ltar-per-page"><?php esc_html_e( 'Строк на странице', 'lithops-tariffs' ); ?></label>
 						<select class="form-select" id="ltar-per-page" name="per_page">
 							<?php foreach ( array( 25, 50, 100, 200 ) as $size ) : ?>
@@ -1030,6 +1038,11 @@ class LTAR_Admin {
 				<datalist id="ltar-import-city-options">
 					<?php foreach ( $import_cities as $city_name ) : ?>
 						<option value="<?php echo esc_attr( $city_name ); ?>"></option>
+					<?php endforeach; ?>
+				</datalist>
+				<datalist id="ltar-service-options">
+					<?php foreach ( $services as $service_name ) : ?>
+						<option value="<?php echo esc_attr( $service_name ); ?>"></option>
 					<?php endforeach; ?>
 				</datalist>
 			</form>

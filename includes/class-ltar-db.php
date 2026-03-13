@@ -54,6 +54,12 @@ class LTAR_DB {
 			$params[] = $import_country;
 		}
 
+		$service = isset( $args['service'] ) ? trim( (string) $args['service'] ) : '';
+		if ( '' !== $service ) {
+			$where[]  = 'service = %s';
+			$params[] = $service;
+		}
+
 		return $where;
 	}
 
@@ -269,6 +275,7 @@ class LTAR_DB {
 			'export_city',
 			'import_country',
 			'import_city',
+			'service',
 		);
 		$column  = sanitize_key( (string) $column );
 
