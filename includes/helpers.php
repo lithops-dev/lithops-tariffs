@@ -257,25 +257,36 @@ function ltar_service_key( $value ) {
 		'fcl20'           => 'sea_fcl_20',
 		'fcl_20'          => 'sea_fcl_20',
 		'sea_fcl_20'      => 'sea_fcl_20',
+		'20dc'            => 'sea_fcl_20',
+		'20_dc'           => 'sea_fcl_20',
 		'20ft'            => 'sea_fcl_20',
 		'20_ft'           => 'sea_fcl_20',
 		'fcl40'           => 'sea_fcl_40',
 		'fcl_40'          => 'sea_fcl_40',
 		'sea_fcl_40'      => 'sea_fcl_40',
+		'40dc'            => 'sea_fcl_40',
+		'40_dc'           => 'sea_fcl_40',
 		'40ft'            => 'sea_fcl_40',
 		'40_ft'           => 'sea_fcl_40',
-		'fcl40hc'         => 'sea_fcl_40hc',
-		'fcl_40hc'        => 'sea_fcl_40hc',
-		'sea_fcl_40hc'    => 'sea_fcl_40hc',
-		'40hc'            => 'sea_fcl_40hc',
-		'40_hc'           => 'sea_fcl_40hc',
-		'40_high_cube'    => 'sea_fcl_40hc',
+		'fcl40hc'         => 'sea_fcl_40',
+		'fcl_40hc'        => 'sea_fcl_40',
+		'sea_fcl_40hc'    => 'sea_fcl_40',
+		'40hc'            => 'sea_fcl_40',
+		'40_hc'           => 'sea_fcl_40',
+		'40_high_cube'    => 'sea_fcl_40',
 		'reefer20'        => 'reefer20',
 		'reefer_20'       => 'reefer20',
 		'sea_reefer_20'   => 'reefer20',
-		'reefer40hc'      => 'reefer40hc',
-		'reefer_40hc'     => 'reefer40hc',
-		'sea_reefer_40hc' => 'reefer40hc',
+		'20ref'           => 'reefer20',
+		'20_ref'          => 'reefer20',
+		'reefer40'        => 'reefer40',
+		'reefer_40'       => 'reefer40',
+		'sea_reefer_40'   => 'reefer40',
+		'reefer40hc'      => 'reefer40',
+		'reefer_40hc'     => 'reefer40',
+		'sea_reefer_40hc' => 'reefer40',
+		'40ref'           => 'reefer40',
+		'40_ref'          => 'reefer40',
 		'air'             => 'air',
 		'air_freight'     => 'air',
 		'airfreight'      => 'air',
@@ -900,7 +911,7 @@ function ltar_expand_structured_payload( $payload ) {
 					'based_on_scenario'   => '' !== $scenario ? $scenario : 'import_country_only',
 					'based_on_route'      => ltar_text( $service_row['based_on_route'] ?? ( $config['based_on_route'] ?? '' ) ),
 					'reason'              => $reason,
-					'price_source'        => ltar_text( $service_row['price_source'] ?? 'erp_import' ),
+					'price_source'        => ltar_text( $service_row['price_source'] ?? 'country_only_default' ),
 				);
 
 				$normalized = ltar_normalize_row( $row );
@@ -946,6 +957,49 @@ function ltar_expand_structured_payload( $payload ) {
 			}
 
 			$service_defaults = $service_defs[ $service_key ] ?? array();
+			$base_rate        = ltar_apply_modifiers_to_rate( $service_row, array(), array(), $currency_default, $service_defaults['unit'] ?? '' );
+			$base_reason      = ltar_text( $service_row['reason'] ?? '' );
+			if ( '' === $base_reason ) {
+				$base_reason = 'country_pair_stub';
+			} elseif ( false === strpos( $base_reason, 'country_pair_stub' ) ) {
+				$base_reason .= ',country_pair_stub';
+			}
+
+			$base_row = array(
+				'export_country'      => $export_name,
+				'export_country_code' => $export_code,
+				'export_city'         => '',
+				'import_country'      => $import_name,
+				'import_country_code' => $import_code,
+				'import_city'         => '',
+				'service'             => $service_key,
+				'service_label'       => $service_defaults['service_label'] ?? '',
+				'unit'                => $service_defaults['unit'] ?? '',
+				'currency'            => $base_rate['currency'],
+				'price_min'           => $base_rate['price_min'],
+				'price_max'           => $base_rate['price_max'],
+				'price_avg'           => $base_rate['price_avg'],
+				'transit_min_days'    => $base_rate['transit_min_days'],
+				'transit_max_days'    => $base_rate['transit_max_days'],
+				'transit_avg_days'    => $base_rate['transit_avg_days'],
+				'based_on_scenario'   => 'country_to_country',
+				'reason'              => $base_reason,
+				'price_source'        => ltar_text( $service_row['price_source'] ?? 'country_pair_stub' ),
+			);
+
+			$normalized = ltar_normalize_row( $base_row );
+			$signature  = implode(
+				'|',
+				array(
+					$normalized['export_country_code'],
+					$normalized['export_city'],
+					$normalized['import_country_code'],
+					$normalized['import_city'],
+					$normalized['service'],
+				)
+			);
+
+			$rows_map[ $signature ] = $normalized;
 			$variants         = array();
 
 			if ( empty( $export_cities ) && empty( $import_cities ) ) {
@@ -1120,4 +1174,719 @@ function ltar_prepare_rows_for_output( $rows ) {
 	}
 
 	return $out;
+}
+
+/**
+ * Normalize string for matching.
+ *
+ * @param mixed $value Raw value.
+ * @return string
+ */
+function ltar_match_string( $value ) {
+	return strtolower( trim( (string) $value ) );
+}
+
+/**
+ * Find country code by exact country name.
+ *
+ * @param string $name   Country name.
+ * @param array  $lookup Code => name map.
+ * @return string
+ */
+function ltar_find_country_code_by_name( $name, $lookup ) {
+	$name = ltar_match_string( $name );
+	if ( '' === $name || ! is_array( $lookup ) ) {
+		return '';
+	}
+
+	foreach ( $lookup as $code => $label ) {
+		if ( ltar_match_string( $label ) === $name ) {
+			return strtoupper( trim( (string) $code ) );
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Check whether row has any numeric metrics.
+ *
+ * @param array $row Prepared row.
+ * @return bool
+ */
+function ltar_has_numeric_metrics( $row ) {
+	$row = is_array( $row ) ? $row : array();
+
+	foreach ( array( 'price_min', 'price_max', 'transit_min_days', 'transit_max_days' ) as $field ) {
+		if ( is_numeric( $row[ $field ] ?? null ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Split reason string into unique tokens.
+ *
+ * @param mixed $value Raw reason value.
+ * @return array<int,string>
+ */
+function ltar_reason_tokens( $value ) {
+	$value = trim( (string) $value );
+	if ( '' === $value ) {
+		return array();
+	}
+
+	$tokens = array();
+	foreach ( explode( ',', $value ) as $item ) {
+		$item = trim( (string) $item );
+		if ( '' !== $item ) {
+			$tokens[ $item ] = $item;
+		}
+	}
+
+	return array_values( $tokens );
+}
+
+/**
+ * Resolve route scenario from prepared row.
+ *
+ * @param array $row Prepared row.
+ * @return string
+ */
+function ltar_resolve_row_scenario( $row ) {
+	$row = is_array( $row ) ? $row : array();
+
+	$scenario = sanitize_key( (string) ( $row['based_on_scenario'] ?? '' ) );
+	if ( '' !== $scenario ) {
+		return $scenario;
+	}
+
+	$has_export_country = ! empty( $row['export_country_code'] ) || ! empty( $row['export_country'] );
+	$has_import_country = ! empty( $row['import_country_code'] ) || ! empty( $row['import_country'] );
+	$has_export_city    = '' !== trim( (string) ( $row['export_city'] ?? '' ) );
+	$has_import_city    = '' !== trim( (string) ( $row['import_city'] ?? '' ) );
+
+	if ( $has_import_country && ! $has_export_country && ! $has_export_city && ! $has_import_city ) {
+		return 'import_country_only';
+	}
+	if ( $has_export_country && $has_import_country && $has_export_city && $has_import_city ) {
+		return 'city_to_city';
+	}
+	if ( $has_export_country && $has_import_country && $has_export_city ) {
+		return 'city_to_country';
+	}
+	if ( $has_export_country && $has_import_country && $has_import_city ) {
+		return 'country_to_city';
+	}
+	if ( $has_export_country && $has_import_country ) {
+		return 'country_to_country';
+	}
+
+	return '';
+}
+
+/**
+ * Check whether row should be treated as country-only fallback.
+ *
+ * @param array $row Prepared row.
+ * @return bool
+ */
+function ltar_is_country_only_fallback_row( $row ) {
+	$row = is_array( $row ) ? $row : array();
+
+	if ( 'import_country_only' === ltar_resolve_row_scenario( $row ) ) {
+		return true;
+	}
+
+	$price_source = strtolower( trim( (string) ( $row['price_source'] ?? '' ) ) );
+	if ( 'country_only_default' === $price_source ) {
+		return true;
+	}
+
+	foreach ( array( 'default_market_reference', 'country_only_service_aggregate', 'fallback_country_only' ) as $token ) {
+		if ( in_array( $token, ltar_reason_tokens( $row['reason'] ?? '' ), true ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Aggregate a set of prepared rows into one resolved layer.
+ *
+ * @param array $rows Prepared rows.
+ * @return array<string,mixed>
+ */
+function ltar_aggregate_rows( $rows ) {
+	$rows = is_array( $rows ) ? array_values( $rows ) : array();
+	if ( empty( $rows ) ) {
+		return array();
+	}
+
+	$first             = $rows[0];
+	$price_min         = null;
+	$price_max         = null;
+	$transit_min       = null;
+	$transit_max       = null;
+	$currency          = '';
+	$unit              = '';
+	$service_label     = '';
+	$based_on_route    = '';
+	$based_on_scenario = '';
+	$reason_tokens     = array();
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		if ( is_numeric( $row['price_min'] ?? null ) ) {
+			$candidate = (float) $row['price_min'];
+			$price_min = ( null === $price_min ) ? $candidate : min( $price_min, $candidate );
+		}
+		if ( is_numeric( $row['price_max'] ?? null ) ) {
+			$candidate = (float) $row['price_max'];
+			$price_max = ( null === $price_max ) ? $candidate : max( $price_max, $candidate );
+		}
+		if ( is_numeric( $row['transit_min_days'] ?? null ) ) {
+			$candidate   = (int) $row['transit_min_days'];
+			$transit_min = ( null === $transit_min ) ? $candidate : min( $transit_min, $candidate );
+		}
+		if ( is_numeric( $row['transit_max_days'] ?? null ) ) {
+			$candidate   = (int) $row['transit_max_days'];
+			$transit_max = ( null === $transit_max ) ? $candidate : max( $transit_max, $candidate );
+		}
+
+		if ( '' === $currency && ! empty( $row['currency'] ) ) {
+			$currency = trim( (string) $row['currency'] );
+		}
+		if ( '' === $unit && ! empty( $row['unit'] ) ) {
+			$unit = trim( (string) $row['unit'] );
+		}
+		if ( '' === $service_label && ! empty( $row['service_label'] ) ) {
+			$service_label = trim( (string) $row['service_label'] );
+		}
+		if ( '' === $based_on_route && ! empty( $row['based_on_route'] ) ) {
+			$based_on_route = trim( (string) $row['based_on_route'] );
+		}
+		if ( '' === $based_on_scenario ) {
+			$based_on_scenario = ltar_resolve_row_scenario( $row );
+		}
+
+		foreach ( ltar_reason_tokens( $row['reason'] ?? '' ) as $token ) {
+			$reason_tokens[ $token ] = $token;
+		}
+	}
+
+	return array(
+		'export_country'      => trim( (string) ( $first['export_country'] ?? '' ) ),
+		'export_country_code' => strtoupper( trim( (string) ( $first['export_country_code'] ?? '' ) ) ),
+		'export_city'         => trim( (string) ( $first['export_city'] ?? '' ) ),
+		'import_country'      => trim( (string) ( $first['import_country'] ?? '' ) ),
+		'import_country_code' => strtoupper( trim( (string) ( $first['import_country_code'] ?? '' ) ) ),
+		'import_city'         => trim( (string) ( $first['import_city'] ?? '' ) ),
+		'service_label'       => $service_label,
+		'price_min'           => $price_min,
+		'price_max'           => $price_max,
+		'transit_min_days'    => $transit_min,
+		'transit_max_days'    => $transit_max,
+		'currency'            => $currency,
+		'unit'                => $unit,
+		'based_on_route'      => $based_on_route,
+		'based_on_scenario'   => $based_on_scenario,
+		'reason'              => implode( ',', array_values( $reason_tokens ) ),
+	);
+}
+
+/**
+ * Fill missing metrics from fallback layer.
+ *
+ * @param array $base     Primary layer.
+ * @param array $fallback Fallback layer.
+ * @return array{0:array,1:bool}
+ */
+function ltar_merge_metrics( $base, $fallback ) {
+	$base     = is_array( $base ) ? $base : array();
+	$fallback = is_array( $fallback ) ? $fallback : array();
+
+	if ( empty( $fallback ) ) {
+		return array( $base, false );
+	}
+
+	$used = false;
+
+	foreach ( array( 'price_min', 'price_max', 'transit_min_days', 'transit_max_days' ) as $field ) {
+		if ( ! is_numeric( $base[ $field ] ?? null ) && is_numeric( $fallback[ $field ] ?? null ) ) {
+			$base[ $field ] = $fallback[ $field ];
+			$used           = true;
+		}
+	}
+
+	foreach (
+		array(
+			'currency',
+			'unit',
+			'service_label',
+			'based_on_route',
+			'based_on_scenario',
+			'export_country',
+			'export_country_code',
+			'export_city',
+			'import_country',
+			'import_country_code',
+			'import_city',
+		) as $field
+	) {
+		if ( '' === trim( (string) ( $base[ $field ] ?? '' ) ) && '' !== trim( (string) ( $fallback[ $field ] ?? '' ) ) ) {
+			$base[ $field ] = $fallback[ $field ];
+			$used           = true;
+		}
+	}
+
+	if ( $used && '' === trim( (string) ( $base['reason'] ?? '' ) ) && '' !== trim( (string) ( $fallback['reason'] ?? '' ) ) ) {
+		$base['reason'] = trim( (string) $fallback['reason'] );
+	}
+
+	return array( $base, $used );
+}
+
+/**
+ * Resolve one tariff request against prepared ERP rows.
+ *
+ * @param array $request Raw request.
+ * @param array $rows    Optional prepared rows.
+ * @return array<string,mixed>
+ */
+function ltar_resolve_catalog_request( $request, $rows = array() ) {
+	$request = is_array( $request ) ? $request : array();
+	$rows    = is_array( $rows ) ? $rows : array();
+
+	if ( empty( $rows ) ) {
+		$rows = ltar_prepare_rows_for_output( LTAR_DB::get_rows() );
+	}
+	if ( empty( $rows ) ) {
+		return array();
+	}
+
+	$service = ltar_service_key( $request['service'] ?? '' );
+	if ( '' === $service ) {
+		return array();
+	}
+
+	$scenario    = sanitize_key( (string) ( $request['scenario'] ?? '' ) );
+	$import_code = strtoupper( trim( (string) ( $request['import_country_code'] ?? '' ) ) );
+	$export_code = strtoupper( trim( (string) ( $request['export_country_code'] ?? '' ) ) );
+	$import_name = trim( (string) ( $request['import_country'] ?? '' ) );
+	$export_name = trim( (string) ( $request['export_country'] ?? '' ) );
+	$import_city = trim( (string) ( $request['import_city'] ?? '' ) );
+	$export_city = trim( (string) ( $request['export_city'] ?? '' ) );
+
+	$import_lookup = array();
+	$export_lookup = array();
+	$prepared      = array();
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		$row_service = ltar_service_key( $row['service'] ?? '' );
+		if ( $row_service !== $service ) {
+			continue;
+		}
+
+		$row_import_code = strtoupper( trim( (string) ( $row['import_country_code'] ?? '' ) ) );
+		$row_export_code = strtoupper( trim( (string) ( $row['export_country_code'] ?? '' ) ) );
+		$row_import_name = trim( (string) ( $row['import_country'] ?? '' ) );
+		$row_export_name = trim( (string) ( $row['export_country'] ?? '' ) );
+
+		if ( '' !== $row_import_code && '' !== $row_import_name ) {
+			$import_lookup[ $row_import_code ] = $row_import_name;
+		}
+		if ( '' !== $row_export_code && '' !== $row_export_name ) {
+			$export_lookup[ $row_export_code ] = $row_export_name;
+		}
+
+		$prepared[] = array(
+			'export_country'      => $row_export_name,
+			'export_country_code' => $row_export_code,
+			'export_city'         => trim( (string) ( $row['export_city'] ?? '' ) ),
+			'import_country'      => $row_import_name,
+			'import_country_code' => $row_import_code,
+			'import_city'         => trim( (string) ( $row['import_city'] ?? '' ) ),
+			'service_label'       => trim( (string) ( $row['service_label'] ?? '' ) ),
+			'price_min'           => is_numeric( $row['price_min'] ?? null ) ? (float) $row['price_min'] : null,
+			'price_max'           => is_numeric( $row['price_max'] ?? null ) ? (float) $row['price_max'] : null,
+			'transit_min_days'    => is_numeric( $row['transit_min_days'] ?? null ) ? (int) $row['transit_min_days'] : null,
+			'transit_max_days'    => is_numeric( $row['transit_max_days'] ?? null ) ? (int) $row['transit_max_days'] : null,
+			'currency'            => trim( (string) ( $row['currency'] ?? '' ) ),
+			'unit'                => trim( (string) ( $row['unit'] ?? '' ) ),
+			'based_on_route'      => trim( (string) ( $row['based_on_route'] ?? '' ) ),
+			'based_on_scenario'   => ltar_resolve_row_scenario( $row ),
+			'reason'              => trim( (string) ( $row['reason'] ?? '' ) ),
+			'price_source'        => trim( (string) ( $row['price_source'] ?? '' ) ),
+		);
+	}
+
+	if ( empty( $prepared ) ) {
+		return array();
+	}
+
+	if ( '' === $scenario ) {
+		$has_export_city = '' !== $export_city;
+		$has_import_city = '' !== $import_city;
+		$has_export      = '' !== $export_code || '' !== $export_name;
+		if ( $has_export_city && $has_import_city ) {
+			$scenario = 'city_to_city';
+		} elseif ( $has_export_city && $has_export ) {
+			$scenario = 'city_to_country';
+		} elseif ( $has_import_city && $has_export ) {
+			$scenario = 'country_to_city';
+		} elseif ( $has_export ) {
+			$scenario = 'country_to_country';
+		} else {
+			$scenario = 'import_country_only';
+		}
+	}
+
+	if ( '' === $import_code ) {
+		$raw = strtoupper( trim( (string) $import_name ) );
+		if ( '' !== $raw && preg_match( '/^[A-Z]{2}$/', $raw ) ) {
+			$import_code = $raw;
+		} else {
+			$import_code = ltar_find_country_code_by_name( $import_name, $import_lookup );
+		}
+	}
+	if ( '' === $export_code ) {
+		$raw = strtoupper( trim( (string) $export_name ) );
+		if ( '' !== $raw && preg_match( '/^[A-Z]{2}$/', $raw ) ) {
+			$export_code = $raw;
+		} else {
+			$export_code = ltar_find_country_code_by_name( $export_name, $export_lookup );
+		}
+	}
+
+	$import_name_norm = ltar_match_string( $import_name );
+	$export_name_norm = ltar_match_string( $export_name );
+	$country_rows     = array();
+
+	foreach ( $prepared as $row ) {
+		$import_ok = true;
+		if ( '' !== $import_code ) {
+			$import_ok = $row['import_country_code'] === $import_code;
+		} elseif ( '' !== $import_name_norm ) {
+			$import_ok = ltar_match_string( $row['import_country'] ) === $import_name_norm;
+		}
+		if ( ! $import_ok ) {
+			continue;
+		}
+
+		$export_required = 'import_country_only' !== $scenario;
+		if ( $export_required ) {
+			$export_ok = true;
+			if ( '' !== $export_code ) {
+				$export_ok = $row['export_country_code'] === $export_code;
+			} elseif ( '' !== $export_name_norm ) {
+				$export_ok = ltar_match_string( $row['export_country'] ) === $export_name_norm;
+			}
+			if ( ! $export_ok ) {
+				continue;
+			}
+		}
+
+		$country_rows[] = $row;
+	}
+
+	if ( empty( $country_rows ) ) {
+		return array();
+	}
+
+	$country_only_rows = array();
+	$pair_stub_rows    = array();
+	$city_rows         = array();
+
+	foreach ( $country_rows as $row ) {
+		if ( ltar_is_country_only_fallback_row( $row ) ) {
+			$country_only_rows[] = $row;
+			continue;
+		}
+
+		$has_export_city = '' !== trim( (string) ( $row['export_city'] ?? '' ) );
+		$has_import_city = '' !== trim( (string) ( $row['import_city'] ?? '' ) );
+
+		if ( ! $has_export_city && ! $has_import_city ) {
+			$pair_stub_rows[] = $row;
+			continue;
+		}
+
+		$city_rows[] = $row;
+	}
+
+	$export_city_norm   = ltar_match_string( $export_city );
+	$import_city_norm   = ltar_match_string( $import_city );
+	$unknown_export     = false;
+	$unknown_import     = false;
+	$exact_rows         = array();
+
+	switch ( $scenario ) {
+		case 'city_to_city':
+			$export_scope = $city_rows;
+			if ( '' !== $export_city_norm ) {
+				$export_scope = array();
+				foreach ( $city_rows as $row ) {
+					if ( ltar_match_string( $row['export_city'] ) === $export_city_norm ) {
+						$export_scope[] = $row;
+					}
+				}
+				if ( empty( $export_scope ) ) {
+					$unknown_export = true;
+				}
+			}
+
+			if ( ! empty( $export_scope ) ) {
+				$exact_rows = $export_scope;
+				if ( '' !== $import_city_norm ) {
+					$tmp = array();
+					foreach ( $export_scope as $row ) {
+						if ( ltar_match_string( $row['import_city'] ) === $import_city_norm ) {
+							$tmp[] = $row;
+						}
+					}
+					if ( ! empty( $tmp ) ) {
+						$exact_rows = $tmp;
+					} else {
+						$exact_rows    = array();
+						$unknown_import = true;
+					}
+				}
+			}
+			break;
+
+		case 'city_to_country':
+			if ( '' !== $export_city_norm ) {
+				foreach ( $city_rows as $row ) {
+					if ( ltar_match_string( $row['export_city'] ) === $export_city_norm ) {
+						$exact_rows[] = $row;
+					}
+				}
+				if ( empty( $exact_rows ) ) {
+					$unknown_export = true;
+				}
+			} else {
+				$exact_rows = $city_rows;
+			}
+			break;
+
+		case 'country_to_city':
+			if ( '' !== $import_city_norm ) {
+				foreach ( $city_rows as $row ) {
+					if ( ltar_match_string( $row['import_city'] ) === $import_city_norm ) {
+						$exact_rows[] = $row;
+					}
+				}
+				if ( empty( $exact_rows ) ) {
+					$unknown_import = true;
+				}
+			} else {
+				$exact_rows = $city_rows;
+			}
+			break;
+
+		case 'import_country_only':
+			$exact_rows = array();
+			break;
+
+		case 'country_to_country':
+		default:
+			$exact_rows = $city_rows;
+			break;
+	}
+
+	$exact_result   = ltar_aggregate_rows( $exact_rows );
+	$pair_result    = ltar_aggregate_rows( $pair_stub_rows );
+	$country_result = ltar_aggregate_rows( $country_only_rows );
+
+	$exact_has   = ltar_has_numeric_metrics( $exact_result );
+	$pair_has    = ltar_has_numeric_metrics( $pair_result );
+	$country_has = ltar_has_numeric_metrics( $country_result );
+
+	$used_pair_primary    = false;
+	$used_pair_fill       = false;
+	$used_country_primary = false;
+	$used_country_fill    = false;
+
+	if ( 'import_country_only' === $scenario ) {
+		if ( ! $country_has ) {
+			return array();
+		}
+
+		$final  = $country_result;
+		$source = $country_result;
+	} else {
+		$final  = $exact_has ? $exact_result : array();
+		$source = $exact_has ? $exact_result : array();
+
+		if ( $exact_has && $pair_has ) {
+			list( $final, $used_pair_fill ) = ltar_merge_metrics( $final, $pair_result );
+		} elseif ( ! $exact_has && $pair_has ) {
+			$final             = $pair_result;
+			$source            = $pair_result;
+			$used_pair_primary = true;
+		}
+
+		if ( ltar_has_numeric_metrics( $final ) && $country_has ) {
+			list( $final, $used_country_fill ) = ltar_merge_metrics( $final, $country_result );
+		} elseif ( ! ltar_has_numeric_metrics( $final ) && $country_has ) {
+			$final                = $country_result;
+			$source               = $country_result;
+			$used_country_primary = true;
+		}
+
+		if ( ! ltar_has_numeric_metrics( $final ) ) {
+			return array();
+		}
+	}
+
+	if ( empty( $source ) ) {
+		$source = $pair_has ? $pair_result : $country_result;
+	}
+
+	$price_min   = is_numeric( $final['price_min'] ?? null ) ? (float) $final['price_min'] : null;
+	$price_max   = is_numeric( $final['price_max'] ?? null ) ? (float) $final['price_max'] : null;
+	$transit_min = is_numeric( $final['transit_min_days'] ?? null ) ? (int) $final['transit_min_days'] : null;
+	$transit_max = is_numeric( $final['transit_max_days'] ?? null ) ? (int) $final['transit_max_days'] : null;
+
+	if ( null === $price_min && null === $price_max && null === $transit_min && null === $transit_max ) {
+		return array();
+	}
+
+	$source_export_code = strtoupper( trim( (string) ( $source['export_country_code'] ?? '' ) ) );
+	$source_import_code = strtoupper( trim( (string) ( $source['import_country_code'] ?? '' ) ) );
+	$source_export_name = trim( (string) ( $source['export_country'] ?? '' ) );
+	$source_import_name = trim( (string) ( $source['import_country'] ?? '' ) );
+	$source_export_city = trim( (string) ( $source['export_city'] ?? '' ) );
+	$source_import_city = trim( (string) ( $source['import_city'] ?? '' ) );
+
+	if ( '' === $import_code ) {
+		$import_code = $source_import_code;
+	}
+	if ( '' === $export_code ) {
+		$export_code = $source_export_code;
+	}
+	if ( '' === $import_name ) {
+		$import_name = '' !== $source_import_name ? $source_import_name : ( $import_lookup[ $import_code ] ?? $import_code );
+	}
+	if ( '' === $export_name ) {
+		$export_name = '' !== $source_export_name ? $source_export_name : ( $export_lookup[ $export_code ] ?? $export_code );
+	}
+
+	$price_avg   = ltar_average( $price_min, $price_max );
+	$transit_avg = ltar_average( $transit_min, $transit_max );
+
+	$resolved_export_city = '';
+	$resolved_import_city = '';
+
+	if ( $exact_has ) {
+		if ( in_array( $scenario, array( 'city_to_country', 'city_to_city' ), true ) ) {
+			$resolved_export_city = '' !== $export_city ? $export_city : $source_export_city;
+		}
+		if ( in_array( $scenario, array( 'country_to_city', 'city_to_city' ), true ) ) {
+			$resolved_import_city = '' !== $import_city ? $import_city : $source_import_city;
+		}
+	} else {
+		$resolved_export_city = $source_export_city;
+		$resolved_import_city = $source_import_city;
+	}
+
+	if ( 'import_country_only' === $scenario && '' === $resolved_import_city ) {
+		$resolved_import_city = $source_import_city;
+	}
+
+	$based_on_route = trim( (string) ( $source['based_on_route'] ?? '' ) );
+	if ( $exact_has || '' === $based_on_route ) {
+		$route_from = '' !== $resolved_export_city ? $resolved_export_city : $export_name;
+		$route_to   = '' !== $resolved_import_city ? $resolved_import_city : $import_name;
+
+		if ( 'country_to_country' === $scenario ) {
+			$route_from = $export_name;
+			$route_to   = $import_name;
+		} elseif ( 'city_to_country' === $scenario ) {
+			$route_from = '' !== $resolved_export_city ? $resolved_export_city : $export_name;
+			$route_to   = $import_name;
+		} elseif ( 'country_to_city' === $scenario ) {
+			$route_from = $export_name;
+			$route_to   = '' !== $resolved_import_city ? $resolved_import_city : $import_name;
+		}
+
+		$based_on_route = trim( $route_from . ' -> ' . $route_to );
+	}
+
+	$reason_tokens = array();
+	if ( $unknown_export ) {
+		$reason_tokens['unknown_export_city'] = 'unknown_export_city';
+	}
+	if ( $unknown_import ) {
+		$reason_tokens['unknown_import_city'] = 'unknown_import_city';
+	}
+	if ( $used_pair_primary ) {
+		$reason_tokens['fallback_country_pair'] = 'fallback_country_pair';
+	}
+	if ( $used_pair_fill ) {
+		$reason_tokens['fill_from_country_pair'] = 'fill_from_country_pair';
+	}
+	if ( $used_country_primary || 'import_country_only' === $scenario ) {
+		$reason_tokens['fallback_country_only'] = 'fallback_country_only';
+	}
+	if ( $used_country_fill ) {
+		$reason_tokens['fill_from_country_only'] = 'fill_from_country_only';
+	}
+
+	foreach (
+		array(
+			$exact_has ? $exact_result : array(),
+			( $used_pair_primary || $used_pair_fill ) ? $pair_result : array(),
+			( $used_country_primary || $used_country_fill || 'import_country_only' === $scenario ) ? $country_result : array(),
+		) as $layer
+	) {
+		foreach ( ltar_reason_tokens( $layer['reason'] ?? '' ) as $token ) {
+			$reason_tokens[ $token ] = $token;
+		}
+	}
+
+	$service_label     = trim( (string) ( $final['service_label'] ?? ( $source['service_label'] ?? strtoupper( $service ) ) ) );
+	$currency          = trim( (string) ( $final['currency'] ?? ( $source['currency'] ?? 'USD' ) ) );
+	$unit              = trim( (string) ( $final['unit'] ?? ( $source['unit'] ?? '' ) ) );
+	$based_on_scenario = trim( (string) ( $source['based_on_scenario'] ?? '' ) );
+
+	if ( '' === $based_on_scenario ) {
+		$based_on_scenario = '' !== $scenario ? $scenario : 'import_country_only';
+	}
+
+	return array(
+		'scenario'           => '' !== $scenario ? $scenario : 'import_country_only',
+		'service'            => $service,
+		'service_label'      => $service_label,
+		'export_country'     => $export_name,
+		'export_country_code'=> $export_code,
+		'export_city'        => $resolved_export_city,
+		'import_country'     => $import_name,
+		'import_country_code'=> $import_code,
+		'import_city'        => $resolved_import_city,
+		'price_min'          => $price_min,
+		'price_max'          => $price_max,
+		'price_avg'          => $price_avg,
+		'price_exact'        => ( 'city_to_city' === $scenario && $exact_has ) ? $price_avg : $price_min,
+		'transit_min_days'   => $transit_min,
+		'transit_max_days'   => $transit_max,
+		'transit_avg_days'   => $transit_avg,
+		'transit_exact_days' => ( 'city_to_city' === $scenario && $exact_has ) ? $transit_avg : $transit_min,
+		'currency'           => '' !== $currency ? $currency : 'USD',
+		'unit'               => $unit,
+		'based_on_route'     => $based_on_route,
+		'based_on_scenario'  => $based_on_scenario,
+		'reason'             => implode( ',', array_values( $reason_tokens ) ),
+	);
 }

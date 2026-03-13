@@ -4,7 +4,7 @@ Tags: erp, tariffs, json, seo, logistics
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 Central ERP tariffs catalog for Endure Route. Imports JSON, stores normalized tariff rows, provides CRUD in wp-admin, and exposes a protected REST endpoint for secondary sites.
@@ -13,6 +13,7 @@ Central ERP tariffs catalog for Endure Route. Imports JSON, stores normalized ta
 * JSON import from ERP admin with full catalog replacement.
 * Tabular CRUD for tariff rows directly in WordPress admin.
 * Protected REST route `GET /wp-json/ltar/v1/catalog`.
+* Protected REST route `POST /wp-json/ltar/v1/resolve` for ERP-side route resolution with stubs/fallbacks.
 * Supports structured payloads (`country_only_defaults`, `country_pairs`, `lane_matrix`) and flat rows.
 * Reuses the enrollment token from `lithops-erp-sites-connector` when available.
 
@@ -22,6 +23,7 @@ Central ERP tariffs catalog for Endure Route. Imports JSON, stores normalized ta
 3. Import a JSON file or create rows manually.
 4. On secondary sites configure `lithops-erp-bridge` with the ERP endpoint/token from `ERP Sites Connector`.
 5. SEO plugins will receive the centralized catalog through `lithops-seo-settings`.
+6. Child sites may also request a resolved tariff row through `ltar/v1/resolve`, so city-city, country-country and country-only stubs stay centralized on ERP.
 
 == JSON Support ==
 Supported formats:
@@ -36,6 +38,10 @@ Supported formats:
 * Stored tokens are encrypted with WordPress salts when OpenSSL is available.
 
 == Changelog ==
+
+= 1.1.0 =
+* Added ERP-side `POST /wp-json/ltar/v1/resolve` endpoint.
+* Centralized country-country and country-only fallback resolution on ERP.
 
 = 1.0.0 =
 * Initial release.

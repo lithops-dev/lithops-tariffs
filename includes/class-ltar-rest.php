@@ -33,6 +33,16 @@ class LTAR_REST {
 				'permission_callback' => array( __CLASS__, 'permission_catalog' ),
 			)
 		);
+
+		register_rest_route(
+			'ltar/v1',
+			'/resolve',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'handle_resolve' ),
+				'permission_callback' => array( __CLASS__, 'permission_catalog' ),
+			)
+		);
 	}
 
 	/**
@@ -73,6 +83,31 @@ class LTAR_REST {
 				'last_import_name' => ltar_text( $settings['last_import_name'] ?? '' ),
 				'last_import_gmt'  => ltar_text( $settings['last_import_gmt'] ?? '' ),
 				'rows'             => ltar_prepare_rows_for_output( $rows ),
+			)
+		);
+	}
+
+	/**
+	 * Resolve one tariff request centrally on ERP.
+	 *
+	 * @param WP_REST_Request $request REST request.
+	 * @return WP_REST_Response
+	 */
+	public static function handle_resolve( $request ) {
+		$params = $request->get_json_params();
+		if ( ! is_array( $params ) ) {
+			$params = $request->get_params();
+		}
+
+		$rows     = ltar_prepare_rows_for_output( LTAR_DB::get_rows() );
+		$resolved = function_exists( 'ltar_resolve_catalog_request' )
+			? ltar_resolve_catalog_request( $params, $rows )
+			: array();
+
+		return rest_ensure_response(
+			array(
+				'ok'       => ! empty( $resolved ),
+				'resolved' => $resolved,
 			)
 		);
 	}
