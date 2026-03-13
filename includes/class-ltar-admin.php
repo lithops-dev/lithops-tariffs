@@ -672,6 +672,113 @@ class LTAR_Admin {
 	}
 
 	/**
+	 * Render stub values block.
+	 *
+	 * @return void
+	 */
+	protected static function render_stub_values_section() {
+		$stub_rows         = LTAR_DB::get_stub_rows();
+		$country_only_rows = array();
+		$country_pair_rows = array();
+
+		foreach ( $stub_rows as $row ) {
+			$scenario     = trim( (string) ( $row->based_on_scenario ?? '' ) );
+			$price_source = trim( (string) ( $row->price_source ?? '' ) );
+
+			if ( 'import_country_only' === $scenario || 'country_only_default' === $price_source ) {
+				$country_only_rows[] = $row;
+				continue;
+			}
+
+			if ( 'country_to_country' === $scenario || 'country_pair_stub' === $price_source ) {
+				$country_pair_rows[] = $row;
+			}
+		}
+		?>
+		<details class="ltar-fallback-details ltar-stub-details mb-4">
+			<summary><?php esc_html_e( 'Значения заглушек', 'lithops-tariffs' ); ?></summary>
+			<div class="ltar-fallback-copy">
+				<p><?php esc_html_e( 'Ниже показаны сами fallback-строки, которые используются resolver-ом, когда не находится точный маршрут.', 'lithops-tariffs' ); ?></p>
+
+				<div class="ltar-stub-section">
+					<h3><?php esc_html_e( 'Country-to-country заглушки', 'lithops-tariffs' ); ?></h3>
+					<p class="description"><?php esc_html_e( 'Используются, когда city-to-city или city-to-country / country-to-city не найдены, но есть пара стран экспорта и импорта.', 'lithops-tariffs' ); ?></p>
+					<?php self::render_stub_table( $country_pair_rows, false ); ?>
+				</div>
+
+				<div class="ltar-stub-section">
+					<h3><?php esc_html_e( 'Import-country-only заглушки', 'lithops-tariffs' ); ?></h3>
+					<p class="description"><?php esc_html_e( 'Используются как последний fallback по стране импорта, если точного маршрута и country-to-country заглушки нет.', 'lithops-tariffs' ); ?></p>
+					<?php self::render_stub_table( $country_only_rows, true ); ?>
+				</div>
+			</div>
+		</details>
+		<?php
+	}
+
+	/**
+	 * Render one stub table.
+	 *
+	 * @param array $rows            Stub rows.
+	 * @param bool  $country_only    Whether table is for import-country-only stubs.
+	 * @return void
+	 */
+	protected static function render_stub_table( $rows, $country_only ) {
+		$rows         = is_array( $rows ) ? $rows : array();
+		$country_only = (bool) $country_only;
+
+		if ( empty( $rows ) ) {
+			?>
+			<div class="text-muted"><?php esc_html_e( 'Заглушки этого типа не найдены в каталоге.', 'lithops-tariffs' ); ?></div>
+			<?php
+			return;
+		}
+		?>
+		<div class="table-responsive">
+			<table class="table table-sm table-striped ltar-table ltar-stub-table align-middle">
+				<thead>
+					<tr>
+						<?php if ( ! $country_only ) : ?>
+							<th><?php esc_html_e( 'Откуда', 'lithops-tariffs' ); ?></th>
+						<?php endif; ?>
+						<th><?php esc_html_e( 'Куда', 'lithops-tariffs' ); ?></th>
+						<th><?php esc_html_e( 'Сервис', 'lithops-tariffs' ); ?></th>
+						<th><?php esc_html_e( 'Цена', 'lithops-tariffs' ); ?></th>
+						<th><?php esc_html_e( 'Срок', 'lithops-tariffs' ); ?></th>
+						<th><?php esc_html_e( 'Источник', 'lithops-tariffs' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $rows as $row ) : ?>
+						<?php
+						$from_label = trim( (string) ( $row->export_country ?: $row->export_country_code ) );
+						$to_label   = trim( (string) ( $row->import_country ?: $row->import_country_code ) );
+						$price      = trim( (string) $row->currency ) . ' ' . trim( (string) $row->price_min ) . ' - ' . trim( (string) $row->price_max );
+						$transit    = trim( (string) $row->transit_min_days ) . ' - ' . trim( (string) $row->transit_max_days );
+						?>
+						<tr>
+							<?php if ( ! $country_only ) : ?>
+								<td><?php echo esc_html( $from_label ); ?></td>
+							<?php endif; ?>
+							<td><?php echo esc_html( $to_label ); ?></td>
+							<td>
+								<strong><?php echo esc_html( (string) $row->service ); ?></strong>
+								<div class="text-muted small"><?php echo esc_html( (string) $row->service_label ); ?></div>
+							</td>
+							<td><?php echo esc_html( $price ); ?></td>
+							<td><?php echo esc_html( $transit ); ?></td>
+							<td>
+								<span class="badge text-bg-light"><?php echo esc_html( (string) $row->price_source ); ?></span>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render catalog table, filters and pagination.
 	 *
 	 * @param array  $rows       Current rows.
@@ -736,6 +843,8 @@ class LTAR_Admin {
 					</ul>
 				</div>
 			</details>
+
+			<?php self::render_stub_values_section(); ?>
 
 			<form method="get" class="ltar-filter-form mb-4">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::MENU_SLUG ); ?>">

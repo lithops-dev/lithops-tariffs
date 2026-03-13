@@ -154,6 +154,27 @@
 	padding-left: 18px;
 }
 
+.ltar-stub-section + .ltar-stub-section {
+	margin-top: 24px;
+}
+
+.ltar-stub-section h3 {
+	margin: 0 0 6px;
+	font-size: 18px;
+	color: #12344d;
+}
+
+.ltar-stub-section .description {
+	margin-bottom: 12px;
+	color: #5b6b7b;
+}
+
+.ltar-stub-table {
+	background: #fff;
+	border-radius: 14px;
+	overflow: hidden;
+}
+
 .ltar-table-card .table-responsive {
 	width: 100%;
 }

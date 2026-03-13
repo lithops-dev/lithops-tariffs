@@ -245,6 +245,24 @@ class LTAR_DB {
 	}
 
 	/**
+	 * Get rows that act as fallback stubs.
+	 *
+	 * @return array<int,object>
+	 */
+	public static function get_stub_rows() {
+		global $wpdb;
+
+		$table_name = self::table();
+		$sql        = "SELECT * FROM {$table_name}
+			WHERE based_on_scenario IN ('import_country_only', 'country_to_country')
+				OR price_source IN ('country_only_default', 'country_pair_stub')
+			ORDER BY based_on_scenario ASC, import_country ASC, export_country ASC, service ASC, id DESC";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return (array) $wpdb->get_results( $sql );
+	}
+
+	/**
 	 * Get a single row by id.
 	 *
 	 * @param int $id Row id.
